@@ -15,6 +15,9 @@ public:
 protected:
 	void onCreated() override;
 
+	// 事件处理程序
+	void onClose(EventData& ev);
+
 protected:
 	// 覆盖 get_window_icon 方法以返回自定义图标
 	virtual const HICON get_window_icon() const {
@@ -22,7 +25,7 @@ protected:
 	}
 
 	virtual void setup_event_handlers() override {
-
+		WINDOW_add_handler(WM_CLOSE, onClose);
 	}
 };
 
