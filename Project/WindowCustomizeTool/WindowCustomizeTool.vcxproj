@@ -125,6 +125,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -132,12 +133,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\w32oop\GUI\Menu.cpp" />
+    <ClCompile Include="..\..\..\w32oop\GUI\TrayIcon.cpp" />
     <ClCompile Include="..\..\..\w32oop\GUI\Window.cpp" />
     <ClCompile Include="..\..\..\w32oop\System\Hooks.cpp" />
     <ClCompile Include="..\..\..\w32oop\System\Registry.cpp" />
     <ClCompile Include="..\..\..\w32oop\System\Service.cpp" />
+    <ClCompile Include="IPCWindow.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="SettingsDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\w32oop\Core\publicdef.hpp" />
@@ -146,6 +151,8 @@
     <ClInclude Include="..\..\..\w32oop\Core\w32handle.hpp" />
     <ClInclude Include="..\..\..\w32oop\GUI\def.hpp" />
     <ClInclude Include="..\..\..\w32oop\GUI\InternalMessageBox.hpp" />
+    <ClInclude Include="..\..\..\w32oop\GUI\Menu.hpp" />
+    <ClInclude Include="..\..\..\w32oop\GUI\TrayIcon.hpp" />
     <ClInclude Include="..\..\..\w32oop\GUI\Window.hpp" />
     <ClInclude Include="..\..\..\w32oop\System\def.hpp" />
     <ClInclude Include="..\..\..\w32oop\System\Hooks.hpp" />
@@ -160,8 +167,11 @@
     <ClInclude Include="..\..\..\w32oop\Utility\StringUtil\encodings.hpp" />
     <ClInclude Include="..\..\..\w32oop\Utility\StringUtil\operations.hpp" />
     <ClInclude Include="..\..\..\w32oop\w32use.hpp" />
+    <ClInclude Include="IPCWindow.h" />
     <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="publicdef.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="SettingsDialog.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WindowCustomizeTool.rc" />
@@ -171,6 +181,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\resource\Icon_WindowFinder_0.ico" />
+    <Image Include="..\resource\Icon_WindowFinder_0_16x16.ico" />
     <Image Include="..\resource\Icon_WindowFinder_1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

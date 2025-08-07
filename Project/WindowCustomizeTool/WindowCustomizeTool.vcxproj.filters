@@ -36,6 +36,18 @@
     <ClCompile Include="MainWindow.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\w32oop\GUI\Menu.cpp">
+      <Filter>w32oop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\w32oop\GUI\TrayIcon.cpp">
+      <Filter>w32oop</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingsDialog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="IPCWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -104,6 +116,21 @@
     <ClInclude Include="MainWindow.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\w32oop\GUI\Menu.hpp">
+      <Filter>w32oop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\w32oop\GUI\TrayIcon.hpp">
+      <Filter>w32oop</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingsDialog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="publicdef.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="IPCWindow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WindowCustomizeTool.rc">
@@ -120,6 +147,9 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="..\resource\Icon_WindowFinder_1.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\resource\Icon_WindowFinder_0_16x16.ico">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>
