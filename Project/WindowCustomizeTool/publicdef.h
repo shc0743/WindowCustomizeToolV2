@@ -11,7 +11,7 @@ namespace app {
 	Window& firstAliveWindow();
 	MainWindow& firstAliveMainWindow();
 	void create_win();
-	void quit();
+	void quit(bool soft = true);
 };
 
 

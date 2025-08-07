@@ -46,7 +46,7 @@ namespace app {
 			L" (" + to_wstring(win.size() + 1) + L")");
 		win.push_back((new_window));
 	}
-	void quit() {
+	void quit(bool soft) {
 		bool ok = false;
 		for (auto& w : win) {
 			if (IsWindow(*w)) {
@@ -54,7 +54,7 @@ namespace app {
 				ok = true;
 			}
 		}
-		if (!ok) PostQuitMessage(0);
+		if (!soft || !ok) PostQuitMessage(0);
 	}
 }
 
@@ -83,6 +83,7 @@ int WINAPI wWinMain(
 	InitCommonControlsEx(&icc);
 	// 设置全局选项，关闭所有窗口时退出应用程序
 	Window::set_global_option(Window::Option_QuitWhenWindowAllClosed, true);
+	Window::set_global_option(Window::Option_DebugMode, true);
 	// 创建并显示主窗口
 	try {
 		// 如果已经有窗口，那么不单独创建进程
@@ -96,12 +97,12 @@ int WINAPI wWinMain(
 		icon.setTooltip(L"Window Customize Tool V2");
 		icon.onClick([](EventData& ev) {
 			try {
-				firstAliveWindow().show(1);
-				firstAliveWindow().focus();
+				firstAliveMainWindow().show(1);
+				firstAliveMainWindow().focus();
 			}
 			catch (runtime_error) {
 				// 创建主窗口
-				menu.get_children()[3].click(); // 调用新建窗口菜单项的处理函数
+				create_win();
 			}
 		});
 		icon.onBalloonClick(icon.onClick());
@@ -170,7 +171,7 @@ int WINAPI wWinMain(
 			}),
 			MenuItem::separator(),
 			MenuItem(L"退出 (&X)", 2, [] {
-				quit();
+				quit(false);
 			}),
 		});
 		icon.setMenu(&menu);
@@ -204,7 +205,6 @@ int WINAPI wWinMain(
 		ipcWin.create();
 
 		Window::set_global_option(Window::Option_EnableHotkey, true);
-		Window::set_global_option(Window::Option_DebugMode, true);
 		int ret = Window::run();
 		while (ret == 0x121234) ret = Window::run(); // 再次运行消息循环
 		// 释放内存
