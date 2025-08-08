@@ -15,6 +15,11 @@ protected:
 	virtual void setup_event_handlers() override {
 		WINDOW_add_handler(WM_CLOSE, [this](EventData& ev) { ev.preventDefault(); });
 		WINDOW_add_handler(WM_APP + WM_SHOWWINDOW, [this](EventData&) { app::create_win(); });
+		UINT WM_TaskbarCreated = RegisterWindowMessage(TEXT("TaskbarCreated"));
+		WINDOW_add_handler(WM_TaskbarCreated, [this](EventData& ev) {
+			ev.preventDefault();
+			app::icon.add();
+		});
 	}
 };
 

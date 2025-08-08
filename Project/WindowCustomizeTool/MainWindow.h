@@ -21,7 +21,23 @@ protected:
 	void onCreated() override;
 	void onDestroy() override;
 
+protected:
+	// 控件
+	void init_controls();
+	void doLayout(EventData& ev);
+	void paint(EventData& ev);
+	Static text_targetHwnd, text_clsName;
+	Edit edit_targetHwnd;
+	Static finder;
+	void startFind(EventData& ev);
+	void endFind(EventData& ev);
+	
+protected:
 	// 成员变量
+	HCURSOR hCurFinding = 0;
+	HICON hFinderEmpty = 0, hFinderFilled = 0;
+	HWND target = NULL;
+	bool isFinding = false;
 
 	// 事件处理程序
 	void onClose(EventData& ev);
@@ -37,7 +53,17 @@ public:
 		return app_icon;
 	}
 protected:
+	virtual const COLORREF get_window_background_color() const {
+		return RGB(0xFA, 0xFA, 0xFA);
+	}
 	virtual void setup_event_handlers() override {
+		WINDOW_add_handler(WM_PAINT, paint);
+		WINDOW_add_handler(WM_SIZING, doLayout);
+		WINDOW_add_handler(WM_SIZE, doLayout);
+		WINDOW_add_handler(WM_LBUTTONDOWN, startFind);
+		WINDOW_add_handler(WM_RBUTTONDOWN, startFind);
+		WINDOW_add_handler(WM_LBUTTONUP, endFind);
+		WINDOW_add_handler(WM_RBUTTONUP, endFind);
 		WINDOW_add_handler(WM_CLOSE, onClose);
 		WINDOW_add_handler(WM_APP + WM_CLOSE, [this](EventData&) { remove_style_ex(WS_EX_LAYERED); destroy(); });
 	}

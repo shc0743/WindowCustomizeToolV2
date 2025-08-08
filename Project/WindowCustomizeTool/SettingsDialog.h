@@ -18,8 +18,11 @@ protected:
 	void onCreated() override;
 
 public:
-	virtual const HICON get_window_icon() const {
+	virtual const HICON get_window_icon() const override {
 		return MainWindow().get_window_icon();
+	}
+	virtual const COLORREF get_window_background_color() const override {
+		return RGB(0xF0, 0xF0, 0xF0);
 	}
 protected:
 	virtual void setup_event_handlers() override {

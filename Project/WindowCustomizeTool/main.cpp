@@ -44,6 +44,7 @@ namespace app {
 		new_window->show(1);
 		new_window->text(new_window->text() +
 			L" (" + to_wstring(win.size() + 1) + L")");
+		new_window->focus();
 		win.push_back((new_window));
 	}
 	void quit(bool soft) {
