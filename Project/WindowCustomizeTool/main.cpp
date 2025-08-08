@@ -18,6 +18,7 @@ namespace app {
 	SettingsDialog* setdlg;
 	TrayIcon icon;
 	Menu menu;
+	WindowCustomizeToolV2_app::IPCWindow* ipcwin;
 	bool no_main_window;
 	bool checkwin() { return win.size() != 0; };
 	Window& firstAliveWindow() {
@@ -156,19 +157,7 @@ int WINAPI wWinMain(
 			}),
 			MenuItem::separator(),
 			MenuItem(L"设置 (&S)", 6, [] {
-				if (::app::setdlg) {
-					if (app::setdlg != NULL) {
-						app::setdlg->show(1);
-						app::setdlg->focus();
-						return;
-					}
-					delete app::setdlg;
-				}
-				app::setdlg = new SettingsDialog();
-				app::setdlg->create();
-				app::setdlg->center();
-				app::setdlg->show();
-				app::setdlg->focus();
+				if (app::ipcwin) app::ipcwin->post(WM_APP + WM_SETTINGCHANGE);
 			}),
 			MenuItem::separator(),
 			MenuItem(L"退出 (&X)", 2, [] {
@@ -204,6 +193,7 @@ int WINAPI wWinMain(
 
 		IPCWindow ipcWin;
 		ipcWin.create();
+		::app::ipcwin = &ipcWin;
 
 		Window::set_global_option(Window::Option_EnableHotkey, true);
 		int ret = Window::run();

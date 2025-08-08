@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <w32use.hpp>
 #include <commctrl.h>
 #include "publicdef.h"
@@ -11,10 +11,14 @@ class IPCWindow : public Window {
 public:
 	IPCWindow() : Window(L"IPC Window", 1, 1) {}
 
+private:
+	void openSettingsDialog(EventData& event);
+
 protected:
 	virtual void setup_event_handlers() override {
 		WINDOW_add_handler(WM_CLOSE, [this](EventData& ev) { ev.preventDefault(); });
 		WINDOW_add_handler(WM_APP + WM_SHOWWINDOW, [this](EventData&) { app::create_win(); });
+		WINDOW_add_handler(WM_APP + WM_SETTINGCHANGE, openSettingsDialog);
 		UINT WM_TaskbarCreated = RegisterWindowMessage(TEXT("TaskbarCreated"));
 		WINDOW_add_handler(WM_TaskbarCreated, [this](EventData& ev) {
 			ev.preventDefault();

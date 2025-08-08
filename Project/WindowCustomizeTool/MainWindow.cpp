@@ -1,4 +1,6 @@
 ﻿#include "MainWindow.h"
+#include "IPCWindow.h"
+#include "resource.h"
 HICON MainWindow::app_icon;
 
 
@@ -16,6 +18,7 @@ void MainWindow::onCreated() {
 	}, HotKeyOptions::Windowed);
 
 	init_controls();
+	SetMenu(hwnd, LoadMenu(hInst, MAKEINTRESOURCE(IDR_MENU_MAINWND)));
 }
 
 void MainWindow::onDestroy() {
@@ -55,6 +58,7 @@ void MainWindow::init_controls() {
 
 	edit_targetHwnd = Edit(hwnd, L"0", 120, 10);
 	edit_targetHwnd.create();
+	edit_targetHwnd.readonly(true);
 
 	finder = Static(hwnd, L"", 32, 32);
 	finder.create();
@@ -82,7 +86,12 @@ void MainWindow::doLayout(EventData& ev) {
 void MainWindow::paint(EventData& ev) {
 	ev.returnValue(0);
 
+	PAINTSTRUCT ps;
+	HDC hdc = BeginPaint(hwnd, &ps);
+	// TODO: 在此处添加使用 hdc 的任何绘图代码...
 
+
+	EndPaint(hwnd, &ps);
 }
 
 void MainWindow::startFind(EventData& ev) {
@@ -122,3 +131,33 @@ void MainWindow::endFind(EventData& ev) {
 	// 找到目标窗口
 	// TODO
 }
+
+void MainWindow::onMenu(EventData& ev) {
+	// 处理菜单…
+	// w32oop 内部将菜单标识符作为 wParam
+	switch (ev.wParam) {
+	case ID_MENU_ABOUT:
+		ShellAboutW(hwnd, L"窗口自定义工具 v2", L"GNU General Public License 3.0\n"
+			"https://github.com/shc0743/WindowCustomizeToolV2", get_window_icon());
+		break;
+	case ID_MENU_FILE_CLOSE:
+		close();
+		break;
+	case ID_MENU_FILE_EXIT:
+		app::quit();
+		break;
+	case ID_MENU_NEW_FRAME_MAINWND:
+		app::create_win();
+		break;
+	case ID_MENU_FILE_INSTANCES:
+		app::menu.get_children()[4].click();
+		break;
+	case ID_MENU_OPTIONS_SETTINGS:
+		if (app::ipcwin) app::ipcwin->post(WM_APP + WM_SETTINGCHANGE);
+		break;
+	default:
+		return;
+	}
+	ev.preventDefault();
+}
+

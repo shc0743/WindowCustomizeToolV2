@@ -41,6 +41,7 @@ protected:
 
 	// 事件处理程序
 	void onClose(EventData& ev);
+	void onMenu(EventData& ev);
 
 protected:
 	static HICON app_icon;
@@ -64,6 +65,7 @@ protected:
 		WINDOW_add_handler(WM_RBUTTONDOWN, startFind);
 		WINDOW_add_handler(WM_LBUTTONUP, endFind);
 		WINDOW_add_handler(WM_RBUTTONUP, endFind);
+		WINDOW_add_handler(WM_MENU_CHECKED, onMenu);
 		WINDOW_add_handler(WM_CLOSE, onClose);
 		WINDOW_add_handler(WM_APP + WM_CLOSE, [this](EventData&) { remove_style_ex(WS_EX_LAYERED); destroy(); });
 	}
