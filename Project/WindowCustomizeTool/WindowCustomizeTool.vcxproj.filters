@@ -16,6 +16,9 @@
     <Filter Include="w32oop">
       <UniqueIdentifier>{fc6d7c83-a574-4da9-a583-6b5227d87444}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Configuru">
+      <UniqueIdentifier>{81a00c4c-f466-4ce6-8781-f11286c3f2e9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -46,6 +49,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="IPCWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="configuru_impl.cpp">
+      <Filter>Configuru</Filter>
+    </ClCompile>
+    <ClCompile Include="OverlayWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="winlib.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -129,6 +141,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="IPCWindow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\configuru.hpp">
+      <Filter>Configuru</Filter>
+    </ClInclude>
+    <ClInclude Include="OverlayWindow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="winlib.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

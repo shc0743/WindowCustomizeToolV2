@@ -10,10 +10,12 @@ using namespace WindowCustomizeToolV2_app;
 	name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 	processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #pragma comment(lib, "comctl32.lib")
+#pragma comment(lib, "dwmapi.lib")
 
 
 HINSTANCE hInst;
 namespace app {
+	configuru::Config config;
 	vector<Window*> win;
 	SettingsDialog* setdlg;
 	TrayIcon icon;
@@ -58,6 +60,53 @@ namespace app {
 		}
 		if (!soft || !ok) PostQuitMessage(0);
 	}
+	wstring cfg_path;
+	int load_config(wstring cfg_path) {
+		app::cfg_path = cfg_path;
+		// 初始化 config
+		config = configuru::Config::object();
+		try {
+			if (GetFileAttributesW(cfg_path.c_str()) == INVALID_FILE_ATTRIBUTES) try {
+				// 配置文件不存在，创建默认配置文件
+				configuru::dump_file(wstr_str(cfg_path), config, configuru::JSON);
+			}
+			catch (...) {
+				// 无法写入指定文件
+				// TODO: 报告此问题
+				fprintf(stderr, "[ERROR] Cannot write config file\n");
+			}
+			else config = configuru::parse_file(wstr_str(cfg_path), configuru::JSON);
+		}
+		catch (exception& exc) {
+			// 配置文件异常，询问用户是否重置
+			int user = 0;
+			TaskDialog(NULL, NULL, L"Window Customize Tool V2 - 配置文件异常",
+				L"配置文件解析失败，是否尝试重置配置？",
+				str_wstr(exc.what()).c_str(), TDCBF_YES_BUTTON | TDCBF_CANCEL_BUTTON,
+				TD_WARNING_ICON, &user);
+			if (user != IDYES) return ERROR_FILE_CORRUPT;
+			// 重置配置文件
+			try {
+				configuru::dump_file(wstr_str(cfg_path), config, configuru::JSON);
+			}
+			catch (...) {
+				// 无法写入指定文件
+				// TODO: 报告此问题
+				fprintf(stderr, "[ERROR] Cannot write config file\n");
+			}
+		}
+		return 0;
+	}
+	void save_config() {
+		try {
+			configuru::dump_file(wstr_str(cfg_path), config, configuru::JSON);
+		}
+		catch (...) {
+			// 无法写入指定文件
+			// TODO: 报告此问题
+			fprintf(stderr, "[ERROR] Cannot save config\n");
+		}
+	}
 }
 
 
@@ -96,10 +145,44 @@ int WINAPI wWinMain(
 			}
 		}
 
+		// 加载配置
+		WCHAR app_path[2048]{};
+		GetModuleFileNameW(hInstance, app_path, 2048);
+		// 首先判断应用程序是否是“安装”式（如果是“安装”式，应该在用户文件夹中使用配置文件）
+		if (file_exists(app_path + L".setup"s)) {
+			// installed
+			// 获取 "AppData 目录 \ WindowCustomizeToolV2 \ config.json" 文件并加载配置
+			PWSTR appdata{}; wstring file;
+			bool bOk = SUCCEEDED(SHGetKnownFolderPath(
+				FOLDERID_LocalAppData, 0, 0, &appdata));
+			if (appdata) {
+				if (bOk) file = appdata;
+				CoTaskMemFree(appdata);
+			}
+			if (!bOk) {
+				int ret = load_config(app_path + L".config.json"s);
+				if (ret != 0) return ret;
+			}
+			else {
+				file += L"/WindowCustomizeToolV2/config.json";
+				int ret = load_config(file);
+				if (ret != 0) return ret;
+			}
+		}
+		else {
+			// portable
+			int ret = load_config(app_path + L".config.json"s);
+			if (ret != 0) return ret;
+		}
+		// 通过 RAII 确保应用程序退出前保存配置
+		w32oop::util::RAIIHelper configSaver([] {
+			save_config();
+		});
+
 		icon.setTooltip(L"Window Customize Tool V2");
 		icon.onClick([](EventData& ev) {
 			try {
-				firstAliveMainWindow().show(1);
+				firstAliveMainWindow().show(SW_RESTORE);
 				firstAliveMainWindow().focus();
 			}
 			catch (runtime_error) {
@@ -111,7 +194,7 @@ int WINAPI wWinMain(
 		// 设置托盘图标菜单
 		menu = Menu({
 			MenuItem(L"打开主窗口 (&O)", 1, [] {
-				firstAliveMainWindow().show(1);
+				firstAliveMainWindow().show(SW_RESTORE);
 				firstAliveMainWindow().focus();
 			}),
 			MenuItem(L"隐藏主窗口 (&H)", 3, [] {
@@ -143,7 +226,7 @@ int WINAPI wWinMain(
 					menu.get_children().push_back(MenuItem(
 						format(L"窗口 #{}", i.first), UINT(i.first), [i] {
 						if (i.second && IsWindow(*(i.second))) {
-							i.second->show(1);
+							i.second->show();
 							i.second->focus();
 						}
 					}));
@@ -177,18 +260,12 @@ int WINAPI wWinMain(
 			return true; // 表示异常已被处理
 		});
 
+		icon.setIcon(MainWindow().get_window_icon());
 		if (wstring(lpCmdLine).find(L"--no-main-window") == wstring::npos) {
-			MainWindow* main_window = new MainWindow();
-			win.push_back(main_window);
-			icon.setIcon(main_window->get_window_icon());
-			main_window->create();
-			main_window->center();
-			main_window->show();
-			main_window->text(main_window->text() + L" (1)");
+			app::create_win();
 		}
 		else {
 			no_main_window = true;
-			icon.setIcon(MainWindow().get_window_icon());
 		}
 
 		IPCWindow ipcWin;

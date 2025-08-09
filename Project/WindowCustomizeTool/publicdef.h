@@ -1,4 +1,10 @@
 #pragma once
+#include "../lib/configuru.hpp"
+#include <w32use.hpp>
+#include <ShlObj.h>
+#include <Shlwapi.h>
+
+using namespace w32oop::util::str::converts;
 
 extern HINSTANCE hInst;
 class MainWindow;
@@ -18,7 +24,16 @@ namespace app {
 	MainWindow& firstAliveMainWindow();
 	void create_win();
 	void quit(bool soft = true);
+	int load_config(std::wstring cfg_path);
+	void save_config();
 };
+namespace app {
+	extern configuru::Config config;
+};
+
+inline bool file_exists(std::wstring file) noexcept {
+	return (GetFileAttributesW(file.c_str()) != INVALID_FILE_ATTRIBUTES);
+}
 
 
 #define ns_declare(name) namespace name {

@@ -139,10 +139,13 @@
     <ClCompile Include="..\..\..\w32oop\System\Hooks.cpp" />
     <ClCompile Include="..\..\..\w32oop\System\Registry.cpp" />
     <ClCompile Include="..\..\..\w32oop\System\Service.cpp" />
+    <ClCompile Include="configuru_impl.cpp" />
     <ClCompile Include="IPCWindow.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="OverlayWindow.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />
+    <ClCompile Include="winlib.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\w32oop\Core\publicdef.hpp" />
@@ -167,11 +170,14 @@
     <ClInclude Include="..\..\..\w32oop\Utility\StringUtil\encodings.hpp" />
     <ClInclude Include="..\..\..\w32oop\Utility\StringUtil\operations.hpp" />
     <ClInclude Include="..\..\..\w32oop\w32use.hpp" />
+    <ClInclude Include="..\lib\configuru.hpp" />
     <ClInclude Include="IPCWindow.h" />
     <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="OverlayWindow.h" />
     <ClInclude Include="publicdef.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SettingsDialog.h" />
+    <ClInclude Include="winlib.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WindowCustomizeTool.rc" />

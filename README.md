@@ -1,6 +1,9 @@
 # WindowCustomizeToolV2
 
-本项目使用 [w32oop](https://github.com/shc0743/w32oop) 库进行开发。
+# Third-party Libraries
+
+- [w32oop](https://github.com/shc0743/w32oop)    MIT
+- [Configuru](https://github.com/emilk/Configuru)    public domain
 
 # License
 
