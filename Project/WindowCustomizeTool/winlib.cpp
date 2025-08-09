@@ -127,6 +127,13 @@ void HighlightWindow(HWND target, COLORREF color, UINT width) {
 		g_lastColor = CLR_INVALID;
 		g_lastWidth = 0;
 	}
+	else if (!target) {
+		// 重置全局变量
+		g_lastPen = nullptr;
+		ZeroMemory(&g_lastRect, sizeof(RECT));
+		g_lastColor = CLR_INVALID;
+		g_lastWidth = 0;
+	}
 
 	// 绘制新边框（如果目标有效）
 	if (target && !IsRectEmpty(&rcCurrent)) {

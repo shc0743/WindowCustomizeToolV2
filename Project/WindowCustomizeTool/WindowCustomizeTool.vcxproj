@@ -145,6 +145,7 @@
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="OverlayWindow.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />
+    <ClCompile Include="WindowLocator.cpp" />
     <ClCompile Include="winlib.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -177,6 +178,7 @@
     <ClInclude Include="publicdef.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SettingsDialog.h" />
+    <ClInclude Include="WindowLocator.h" />
     <ClInclude Include="winlib.hpp" />
   </ItemGroup>
   <ItemGroup>

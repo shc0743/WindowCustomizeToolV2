@@ -5,6 +5,7 @@
 #include "publicdef.h"
 #include "resource.h"
 #include "OverlayWindow.h"
+#include "WindowLocator.h"
 
 
 
@@ -39,6 +40,8 @@ protected:
 	void duringFind(EventData& ev);
 	void endFind(EventData& ev);
 	void update_target();
+	// 查找器
+	WCTv2::winlib::WindowLocator locator;
 	
 protected:
 	// 成员变量
@@ -59,7 +62,6 @@ protected:
 	bool hideWhenMinimized = false;
 	bool putBottomWhenUse = false;
 	bool useHex = false;
-	COLORREF highlight_color = RGB(0, 0, 0);
 
 	void toggleTopMostState();
 

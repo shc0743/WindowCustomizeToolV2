@@ -157,23 +157,20 @@ void MainWindow::startFind(EventData& ev) {
 	// 窗口置底
 	if (putBottomWhenUse)
 		SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 1, 1, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+	locator.start();
+	locator.setCallback([this](HWND target) {
+		if (this->hwnd == target) return;
+		this->target = target;
+		update_target();
+	});
 }
 
 void MainWindow::duringFind(EventData& ev) {
 	if (!isFinding) return;
 	ev.preventDefault();
 
-	// 找到窗口
-	POINT pt{};
-	GetCursorPos(&pt);
-	target = GetWindowUnderPoint(pt);
-	update_target();
-	if (!target) {
-		RestoreScreenContent();
-		return;
-	}
-
-	HighlightWindow(target, highlight_color, 5);
+	locator.during();
 }
 
 void MainWindow::endFind(EventData& ev) {
@@ -190,12 +187,10 @@ void MainWindow::endFind(EventData& ev) {
 	// 恢复Z序
 	if (putBottomWhenUse)
 		SetWindowPos(hwnd, isTopMost ? HWND_TOPMOST : HWND_TOP, 0, 0, 1, 1, SWP_NOMOVE | SWP_NOSIZE);
-	// 恢复屏幕
-	RestoreScreenContent();
-	// 找到目标窗口
-	POINT pt{};
-	GetCursorPos(&pt);
-	target = GetWindowUnderPoint(pt);
+	// 获取窗口
+	locator.end();
+	if (this->hwnd == locator.target()) return;
+	target = locator.target();
 	update_target();
 }
 

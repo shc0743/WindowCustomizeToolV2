@@ -60,6 +60,9 @@
     <ClCompile Include="winlib.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="WindowLocator.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -150,6 +153,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="winlib.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowLocator.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
