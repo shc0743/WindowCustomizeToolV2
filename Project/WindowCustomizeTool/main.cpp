@@ -22,6 +22,7 @@ namespace app {
 	Menu menu;
 	WindowCustomizeToolV2_app::IPCWindow* ipcwin;
 	bool no_main_window;
+	bool is_portable;
 	bool checkwin() { return win.size() != 0; };
 	Window& firstAliveWindow() {
 		if (win.size() < 1) throw runtime_error("No windows available");
@@ -139,8 +140,8 @@ int WINAPI wWinMain(
 	try {
 		// 如果已经有窗口，那么不单独创建进程
 		if (HWND hWnd = FindWindowW(IPCWindow().get_class_name().c_str(), NULL)) {
-			if (SendMessageTimeoutW(hWnd, WM_APP + WM_SHOWWINDOW,
-				GetCurrentProcessId(), 0, SMTO_BLOCK, 2000, NULL)) {
+			if (SendMessageTimeoutW(hWnd, WM_APP + WM_CREATE,
+				GetCurrentProcessId(), 0, SMTO_BLOCK, 5000, NULL)) {
 				return 0;
 			}
 		}
@@ -171,6 +172,7 @@ int WINAPI wWinMain(
 		}
 		else {
 			// portable
+			is_portable = true;
 			int ret = load_config(app_path + L".config.json"s);
 			if (ret != 0) return ret;
 		}
@@ -181,14 +183,7 @@ int WINAPI wWinMain(
 
 		icon.setTooltip(L"Window Customize Tool V2");
 		icon.onClick([](EventData& ev) {
-			try {
-				firstAliveMainWindow().show(SW_RESTORE);
-				firstAliveMainWindow().focus();
-			}
-			catch (runtime_error) {
-				// 创建主窗口
-				create_win();
-			}
+			ipcwin->post(WM_APP + WM_SHOWWINDOW);
 		});
 		icon.onBalloonClick(icon.onClick());
 		// 设置托盘图标菜单
@@ -226,7 +221,7 @@ int WINAPI wWinMain(
 					menu.get_children().push_back(MenuItem(
 						format(L"窗口 #{}", i.first), UINT(i.first), [i] {
 						if (i.second && IsWindow(*(i.second))) {
-							i.second->show();
+							i.second->show(SW_RESTORE);
 							i.second->focus();
 						}
 					}));
@@ -234,7 +229,8 @@ int WINAPI wWinMain(
 				menu.get_children().push_back(MenuItem::separator());
 				menu.get_children().push_back(MenuItem(
 					L"全部关闭", 999999, [&alive_windows] {
-						for (auto& i : alive_windows) if (i.second) i.second->close();
+						for (auto& i : alive_windows)
+							if (i.second) i.second->post(WM_APP + WM_CLOSE);
 				}));
 				menu.pop();
 			}),
@@ -280,6 +276,8 @@ int WINAPI wWinMain(
 			if (w) delete w;
 		}
 		win.clear();
+
+		if (app::setdlg) delete app::setdlg;
 
 		// 返回
 		return ret;

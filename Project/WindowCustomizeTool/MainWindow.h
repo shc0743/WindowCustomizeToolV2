@@ -34,8 +34,9 @@ protected:
 	void doLayout(EventData& ev);
 	void paint(EventData& ev);
 	Static text_targetHwnd, text_clsName;
-	Edit edit_targetHwnd;
+	Edit edit_targetHwnd, edit_clsName;
 	Static finder;
+	Static text_winTitle; Edit edit_winTitle; Button btn_applyTitle;
 	void startFind(EventData& ev);
 	void duringFind(EventData& ev);
 	void endFind(EventData& ev);
@@ -54,6 +55,7 @@ protected:
 	// 事件处理程序
 	void onClose(EventData& ev);
 	void onMenu(EventData& ev);
+	void onSysMenu(EventData& ev);
 	void onMinimize(EventData& ev);
 
 protected:
@@ -89,6 +91,7 @@ protected:
 		WINDOW_add_handler(WM_RBUTTONUP, endFind);
 		WINDOW_add_handler(WM_MOUSEMOVE, duringFind);
 		WINDOW_add_handler(WM_MENU_CHECKED, onMenu);
+		WINDOW_add_handler(WM_SYSCOMMAND, onSysMenu);
 		WINDOW_add_handler(WM_CLOSE, onClose);
 		WINDOW_add_handler(WM_SIZE, onMinimize);
 		WINDOW_add_handler(WM_APP + WM_CLOSE, [this](EventData&) { remove_style_ex(WS_EX_LAYERED); destroy(); });

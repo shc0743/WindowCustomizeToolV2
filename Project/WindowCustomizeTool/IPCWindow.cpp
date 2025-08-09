@@ -18,6 +18,24 @@ void IPCWindow::onDestroy() {
 }
 
 
+void IPCWindow::showOrCreateWindow(EventData& event) {
+	using namespace app;
+	try {
+		if (event.message == WM_APP + WM_CREATE) {
+			if (IsWindowVisible(firstAliveMainWindow())) {
+                create_win();
+				return;
+			}
+		}
+		firstAliveMainWindow().show(SW_RESTORE);
+		firstAliveMainWindow().focus();
+	}
+	catch (std::runtime_error&) {
+		// 创建主窗口
+		create_win();
+	}
+}
+
 void IPCWindow::openSettingsDialog(EventData& event) {
 	if (app::setdlg) {
 		if ((*app::setdlg) != NULL) {

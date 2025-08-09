@@ -18,6 +18,7 @@ namespace app {
 	extern TrayIcon icon;
 	extern Menu menu;
 	extern bool no_main_window;
+	extern bool is_portable;
 	extern WindowCustomizeToolV2_app::IPCWindow* ipcwin;
 	bool checkwin();
 	Window& firstAliveWindow();

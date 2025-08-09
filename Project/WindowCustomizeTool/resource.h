@@ -74,13 +74,17 @@
 #define ID_MENU_OPTIONS_SHOWFORMAT      32824
 #define ID_MENU_OPTIONS_SHOWFORMAT_DEC  32825
 #define ID_MENU_OPTIONS_SHOWFORMAT_HEX  32826
+#define ID_32827                        32827
+#define ID_MENU_FILE_CLOSE_TOTALLY      32828
+#define ID_32829                        32829
+#define ID_MENU_FILE_INSTALL_APP        32830
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        1801
-#define _APS_NEXT_COMMAND_VALUE         32827
+#define _APS_NEXT_COMMAND_VALUE         32831
 #define _APS_NEXT_CONTROL_VALUE         1635
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

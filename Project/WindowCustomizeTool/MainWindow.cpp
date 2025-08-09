@@ -2,6 +2,7 @@
 #include "IPCWindow.h"
 #include "resource.h"
 #include "winlib.hpp"
+using namespace std;
 HICON MainWindow::app_icon;
 
 using namespace WindowCustomizeToolV2_app;
@@ -14,6 +15,11 @@ void MainWindow::onCreated() {
 	register_hot_key(true, false, false, 'W', [this](HotKeyProcData& data) {
 		data.preventDefault();
 		close();
+	}, HotKeyOptions::Windowed);
+
+	register_hot_key(true, false, true, 'W', [this](HotKeyProcData& data) {
+		data.preventDefault();
+		post(WM_APP + WM_CLOSE);
 	}, HotKeyOptions::Windowed);
 	register_hot_key(true, false, false, 'N', [this](HotKeyProcData& data) {
 		data.preventDefault();
@@ -29,6 +35,10 @@ void MainWindow::onCreated() {
 	if (isTopMost) set_topmost(true);
 	SetMenu(hwnd, LoadMenuW(hInst, MAKEINTRESOURCEW(IDR_MENU_MAINWND)));
 	updateMenuStatus();
+
+	HMENU sys = sysmenu();
+	AppendMenuW(sys, MF_SEPARATOR, 0, NULL);
+	AppendMenuW(sys, MF_STRING, 1001, L"关闭此窗口 (&L)");
 }
 
 void MainWindow::onDestroy() {
@@ -91,13 +101,30 @@ void MainWindow::init_controls() {
 	finder.add_style(SS_ICON | SS_CENTERIMAGE);
 	finder.send(STM_SETIMAGE, IMAGE_ICON, (LPARAM)hFinderFilled);
 
+	text_clsName = Static(hwnd, L"| &Class name:", 1, 1);
+	text_clsName.create();
+	edit_clsName = Edit(hwnd, L"", 1, 1);
+	edit_clsName.create();
+	edit_clsName.readonly(true);
+
+	text_winTitle = Static(hwnd, L"Window &Title:", 1, 1);
+	edit_winTitle = Edit(hwnd, L"", 1, 1);
+	btn_applyTitle = Button(hwnd, L"&Apply", 1, 1);
+	text_winTitle.create();
+	edit_winTitle.create();
+	btn_applyTitle.create();
+
+	btn_applyTitle.onClick([this](EventData& ev) {
+		if (target) SetWindowTextW(target, edit_winTitle.text().c_str());
+		else MessageBoxW(hwnd, L"No window selected", L"Error", MB_OK | MB_ICONERROR);
+	});
 }
 
 void MainWindow::init_config() {
 	isTopMost = app::config.get_or("app.main_window.top_most", false);
-	hideWhenMinimized = app::config.get_or("app.main_window.hide_when_minimized", true);
+	hideWhenMinimized = app::config.get_or("app.main_window.hide_when_minimized", false);
 	putBottomWhenUse = app::config.get_or("app.main_window.bottom_when_use", false);
-	useHex = app::config.get_or("app.main_window.hwnd_format.hex", false);
+	useHex = app::config.get_or("app.main_window.hwnd_format.hex", true);
 }
 
 void MainWindow::updateMenuStatus() {
@@ -117,10 +144,17 @@ void MainWindow::doLayout(EventData& ev) {
 	// 处理 WM_SIZE / WM_SIZING
 	ev.preventDefault();
 
+	RECT rc = { 0 }; GetClientRect(hwnd, &rc);
+	LONG w = rc.right - rc.left, h = rc.bottom - rc.top;
+
 	text_targetHwnd.resize(10, 10, 100, 24);
 	edit_targetHwnd.resize(120, 10, 110, 24);
 	finder.resize(240-4, 10-4, 32, 32);
-
+	text_clsName.resize(275, 10, 100, 24);
+	edit_clsName.resize(380, 10, w - 390, 24);
+	text_winTitle.resize(10, 44, 100, 24);
+	edit_winTitle.resize(120, 44, w - 200, 24);
+	btn_applyTitle.resize(w - 70, 44, 60, 24);
 }
 
 void MainWindow::paint(EventData& ev) {
@@ -198,6 +232,8 @@ void MainWindow::update_target() {
 	// 意图：更新目标窗口的相关信息。
 	if (!target) {
 		edit_targetHwnd.text(L"0"); // NULL
+		edit_clsName.text(L"");
+		edit_winTitle.text(L"");
 		return;
 	}
 
@@ -207,6 +243,12 @@ void MainWindow::update_target() {
 	else {
 		edit_targetHwnd.text(std::to_wstring(reinterpret_cast<ULONGLONG>(target)));
 	}
+
+	auto buffer = make_unique<wchar_t[]>(32768);
+	GetClassNameW(target, buffer.get(), 256); // 窗口类最大 256 字符
+	edit_clsName.text(buffer.get());
+	GetWindowTextW(target, buffer.get(), 32768);
+    edit_winTitle.text(buffer.get());
 }
 
 void MainWindow::onMenu(EventData& ev) {
@@ -252,6 +294,20 @@ void MainWindow::onMenu(EventData& ev) {
 		app::config["app.main_window.hwnd_format.hex"] = useHex;
 		updateMenuStatus();
 		update_target();
+		break;
+	case ID_MENU_FILE_CLOSE_TOTALLY:
+		post(WM_APP + WM_CLOSE);
+		break;
+	default:
+		return;
+	}
+	ev.preventDefault();
+}
+
+void MainWindow::onSysMenu(EventData& ev) {
+	switch (ev.wParam) {
+	case 1001:
+		post(WM_APP + WM_CLOSE);
 		break;
 	default:
 		return;
