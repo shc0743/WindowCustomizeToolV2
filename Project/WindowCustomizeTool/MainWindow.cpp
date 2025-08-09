@@ -11,6 +11,8 @@ using namespace WindowCustomizeToolV2_app;
 
 void MainWindow::onCreated() {
 	SetLayeredWindowAttributes(hwnd, 0, (BYTE)0xee, LWA_ALPHA);
+	sbr.set_parent(this);
+	sbr.create(L"", 1, 1);
 
 	register_hot_key(true, false, false, 'W', [this](HotKeyProcData& data) {
 		data.preventDefault();
@@ -39,6 +41,20 @@ void MainWindow::onCreated() {
 	HMENU sys = sysmenu();
 	AppendMenuW(sys, MF_SEPARATOR, 0, NULL);
 	AppendMenuW(sys, MF_STRING, 1001, L"关闭此窗口 (&L)");
+
+	try {
+		int x = app::config.get_or("app.main_window.userwindow.x", -1);
+		int y = app::config.get_or("app.main_window.userwindow.y", -1);
+		int w = app::config.get_or("app.main_window.userwindow.width", -1);
+		int h = app::config.get_or("app.main_window.userwindow.height", -1);
+		if (x != -1 && y != -1 && w != -1 && h != -1) {
+			resize(x, y, w, h);
+		}
+		else { throw 1; }
+	}
+	catch (...) { center(); }
+	sbr.simple(true);
+	sbr.text(L"Ready");
 }
 
 void MainWindow::onDestroy() {
@@ -46,6 +62,13 @@ void MainWindow::onDestroy() {
 	DeleteObject(hFinderEmpty);
 	DeleteObject(hFinderFilled);
 	DeleteObject(hCurFinding);
+
+	// 保存窗口位置
+	RECT rc{}; GetWindowRect(hwnd, &rc);
+    app::config["app.main_window.userwindow.x"] = rc.left;
+    app::config["app.main_window.userwindow.y"] = rc.top;
+	app::config["app.main_window.userwindow.width"] = rc.right - rc.left;
+    app::config["app.main_window.userwindow.height"] = rc.bottom - rc.top;
 
 	if (app::no_main_window) return;
 	// 如果所有 MainWindow 都关闭了，则退出应用程序
@@ -155,6 +178,8 @@ void MainWindow::doLayout(EventData& ev) {
 	text_winTitle.resize(10, 44, 100, 24);
 	edit_winTitle.resize(120, 44, w - 200, 24);
 	btn_applyTitle.resize(w - 70, 44, 60, 24);
+
+	sbr.post((UINT)ev.message, ev.wParam, ev.lParam);
 }
 
 void MainWindow::paint(EventData& ev) {
@@ -297,6 +322,31 @@ void MainWindow::onMenu(EventData& ev) {
 		break;
 	case ID_MENU_FILE_CLOSE_TOTALLY:
 		post(WM_APP + WM_CLOSE);
+		break;
+	case ID_MENU_HELP_ABOUT:
+		DialogBox(hInst, MAKEINTRESOURCE(IDD_DIALOG_ABOUT), hwnd, (
+			[](HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)->LRESULT {
+				switch (message) {
+                    case WM_INITDIALOG:
+						return TRUE;
+					case WM_COMMAND:
+						switch (LOWORD(wParam)) {
+							case IDOK:
+							case IDCANCEL:
+								EndDialog(hDlg, LOWORD(wParam));
+								break;
+							case IDRETRY:
+								ShellExecuteW(hDlg, L"open", L"https://github.com/shc0743/WindowCustomizeToolV2", NULL, NULL, SW_SHOW);
+								break;
+							default:
+								return FALSE;
+						}
+						return TRUE;
+                    default:
+						return FALSE;
+                }
+			}
+		));
 		break;
 	default:
 		return;

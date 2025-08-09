@@ -33,10 +33,12 @@ protected:
 	void updateMenuStatus();
 	void doLayout(EventData& ev);
 	void paint(EventData& ev);
+	StatusBar sbr;
 	Static text_targetHwnd, text_clsName;
 	Edit edit_targetHwnd, edit_clsName;
 	Static finder;
 	Static text_winTitle; Edit edit_winTitle; Button btn_applyTitle;
+	Static text_parentWin; Edit edit_parentWin; Button btn_selectParent;
 	void startFind(EventData& ev);
 	void duringFind(EventData& ev);
 	void endFind(EventData& ev);

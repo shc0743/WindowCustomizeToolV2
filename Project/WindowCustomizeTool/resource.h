@@ -23,6 +23,7 @@
 #define IDC_EDIT_SWP_uFlags             1632
 #define IDC_BUTTON_SWP_APPLY            1633
 #define IDC_BUTTON_SWP_HELP             1634
+#define IDC_BUTTON1                     1635
 #define ID_MENU_FILE_CLOSE              32774
 #define ID_MENU_FILE_EXIT               32775
 #define ID_MENU_FILE_NEW                32776
@@ -85,7 +86,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        1801
 #define _APS_NEXT_COMMAND_VALUE         32831
-#define _APS_NEXT_CONTROL_VALUE         1635
+#define _APS_NEXT_CONTROL_VALUE         1636
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

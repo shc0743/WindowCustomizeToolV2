@@ -44,7 +44,7 @@ namespace app {
 	void create_win() {
 		MainWindow* new_window = new MainWindow();
 		new_window->create();
-		new_window->center();
+		//new_window->center();
 		new_window->show(1);
 		new_window->text(new_window->text() +
 			L" (" + to_wstring(win.size() + 1) + L")");
@@ -55,7 +55,7 @@ namespace app {
 		bool ok = false;
 		for (auto& w : win) {
 			if (IsWindow(*w)) {
-				w->post(WM_APP + WM_CLOSE);
+				w->send(WM_APP + WM_CLOSE);
 				ok = true;
 			}
 		}
