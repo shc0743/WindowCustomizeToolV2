@@ -46,7 +46,6 @@ void MainWindow::onCreated() {
 		data.preventDefault();
 		close();
 	}, HotKeyOptions::Windowed);
-
 	register_hot_key(true, false, true, 'W', [this](HotKeyProcData& data) {
 		data.preventDefault();
 		post(WM_APP + WM_CLOSE);
@@ -58,6 +57,24 @@ void MainWindow::onCreated() {
 	register_hot_key(true, false, false, 'T', [this](HotKeyProcData& data) {
 		data.preventDefault();
 		toggleTopMostState();
+	}, HotKeyOptions::Windowed);
+	register_hot_key(true, false, false, 'R', [this](HotKeyProcData& data) {
+		data.preventDefault();
+		EventData ed; ed.message = WM_MENU_CHECKED; ed.wParam = ID_MENU_WINDOWMANAGER_RELOAD;
+		ed.preventDefault = [] {};
+		onMenu(ed);
+	}, HotKeyOptions::Windowed);
+	register_hot_key(false, false, false, VK_F5, [this](HotKeyProcData& data) {
+		data.preventDefault();
+		EventData ed; ed.message = WM_MENU_CHECKED; ed.wParam = ID_MENU_WINDOWMANAGER_RELOAD;
+		ed.preventDefault = [] {};
+		onMenu(ed);
+	}, HotKeyOptions::Windowed);
+	register_hot_key(true, false, false, 'F', [this](HotKeyProcData& data) {
+		data.preventDefault();
+		EventData ed; ed.message = WM_MENU_CHECKED; ed.wParam = ID_MENU_WINDOW_FIND;
+		ed.preventDefault = [] {};
+		onMenu(ed);
 	}, HotKeyOptions::Windowed);
 
 	init_controls();
@@ -520,6 +537,29 @@ void MainWindow::onMenu(EventData& ev) {
 			}
 		));
 		break;
+	case ID_MENU_WINDOW_FIND:
+		DialogBox(hInst, MAKEINTRESOURCE(IDD_DIALOG_WINDOWFINDER1), hwnd, (
+			[](HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)->LRESULT {
+				switch (message) {
+				case WM_INITDIALOG:
+					return TRUE;
+				case WM_COMMAND:
+					switch (LOWORD(wParam)) {
+					case IDOK:
+						// 获取窗口……
+					case IDCANCEL:
+						EndDialog(hDlg, LOWORD(wParam));
+						break;
+					default:
+						return FALSE;
+					}
+					return TRUE;
+				default:
+					return FALSE;
+				}
+			}
+			));
+		break;
 	case ID_MENU_OPTIONS_WLPREF_HELP:
 		TaskDialog(hwnd, NULL, L"帮助", L"窗口查找偏好",
 			L"控件		- 默认模式。查找窗口内的控件。\n"
@@ -537,6 +577,10 @@ void MainWindow::onMenu(EventData& ev) {
 		app::config["app.main_window.finder.mode"] = findMode;
 		updateMenuStatus();
 		update_target();
+		break;
+	case ID_MENU_WINDOWMANAGER_RELOAD:
+		update_target();
+		sbr.set_text(0, current_time() + L" 窗口信息更新成功。");
 		break;
 	default:
 		return;
