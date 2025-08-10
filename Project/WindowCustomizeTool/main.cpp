@@ -189,6 +189,8 @@ int WINAPI wWinMain(
 		// 设置托盘图标菜单
 		menu = Menu({
 			MenuItem(L"打开主窗口 (&O)", 1, [] {
+				if (!IsWindowVisible(firstAliveMainWindow()))
+					firstAliveMainWindow().show(SW_MINIMIZE);
 				firstAliveMainWindow().show(SW_RESTORE);
 				firstAliveMainWindow().focus();
 			}),

@@ -27,6 +27,8 @@ void IPCWindow::showOrCreateWindow(EventData& event) {
 				return;
 			}
 		}
+		if (!IsWindowVisible(firstAliveMainWindow()))
+			firstAliveMainWindow().show(SW_MINIMIZE);
 		firstAliveMainWindow().show(SW_RESTORE);
 		firstAliveMainWindow().focus();
 	}

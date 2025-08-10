@@ -23,7 +23,6 @@
 #define IDC_EDIT_SWP_uFlags             1632
 #define IDC_BUTTON_SWP_APPLY            1633
 #define IDC_BUTTON_SWP_HELP             1634
-#define IDC_BUTTON1                     1635
 #define ID_MENU_FILE_CLOSE              32774
 #define ID_MENU_FILE_EXIT               32775
 #define ID_MENU_FILE_NEW                32776
@@ -75,17 +74,19 @@
 #define ID_MENU_OPTIONS_SHOWFORMAT      32824
 #define ID_MENU_OPTIONS_SHOWFORMAT_DEC  32825
 #define ID_MENU_OPTIONS_SHOWFORMAT_HEX  32826
-#define ID_32827                        32827
-#define ID_MENU_FILE_CLOSE_TOTALLY      32828
-#define ID_32829                        32829
-#define ID_MENU_FILE_INSTALL_APP        32830
+#define ID_MENU_FILE_CLOSE_TOTALLY      32827
+#define ID_MENU_FILE_INSTALL_APP        32828
+#define ID_MENU_OPTIONS_WLPREF_HELP     32829
+#define ID_MENU_OPTIONS_WLPREF_CONTROLS 32830
+#define ID_MENU_OPTIONS_WLPREF_TOPLEVEL 32831
+#define ID_MENU_OPTIONS_WLPREF_ROOTOWNER 32832
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        1801
-#define _APS_NEXT_COMMAND_VALUE         32831
+#define _APS_NEXT_COMMAND_VALUE         32833
 #define _APS_NEXT_CONTROL_VALUE         1636
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

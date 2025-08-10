@@ -2,11 +2,39 @@
 #include "IPCWindow.h"
 #include "resource.h"
 #include "winlib.hpp"
+#include <chrono>
 using namespace std;
 HICON MainWindow::app_icon;
 
 using namespace WindowCustomizeToolV2_app;
 
+
+wstring MainWindow::current_time() {
+	// 获取当前系统时间点
+	auto now = std::chrono::system_clock::now();
+
+	// 转换为time_t类型（秒级精度）
+	std::time_t t = std::chrono::system_clock::to_time_t(now);
+
+	// 转换为本地时间结构
+	std::tm tm;
+	localtime_s(&tm, &t);  // Windows安全的本地时间转换
+
+	// 使用std::format进行格式化（C++20特性）
+	return std::format(L"{:02}:{:02}:{:02}",
+		tm.tm_hour,   // 小时 (0-23)
+		tm.tm_min,    // 分钟 (0-59)
+		tm.tm_sec);   // 秒 (0-59)
+}
+
+std::wstring MainWindow::hwnd_strify(HWND hWnd) {
+	if (useHex) {
+		return (std::format(L"0x{:X}", reinterpret_cast<ULONGLONG>(hWnd)));
+	}
+	else {
+		return (std::to_wstring(reinterpret_cast<ULONGLONG>(hWnd)));
+	}
+}
 
 
 void MainWindow::onCreated() {
@@ -42,19 +70,36 @@ void MainWindow::onCreated() {
 	AppendMenuW(sys, MF_SEPARATOR, 0, NULL);
 	AppendMenuW(sys, MF_STRING, 1001, L"关闭此窗口 (&L)");
 
+	success_text = ErrorChecker(0).raw_message();
+
+	// 只在第一个主窗口恢复用户的窗口位置
+	bool shouldRestorePos = true;
+	try {
+		app::firstAliveMainWindow();
+		shouldRestorePos = false;
+	}
+	catch (...) {}
 	try {
 		int x = app::config.get_or("app.main_window.userwindow.x", -1);
 		int y = app::config.get_or("app.main_window.userwindow.y", -1);
 		int w = app::config.get_or("app.main_window.userwindow.width", -1);
 		int h = app::config.get_or("app.main_window.userwindow.height", -1);
 		if (x != -1 && y != -1 && w != -1 && h != -1) {
-			resize(x, y, w, h);
+			if (shouldRestorePos) resize(x, y, w, h);
+			else {
+				resize(w, h);
+				center();
+			}
 		}
 		else { throw 1; }
 	}
 	catch (...) { center(); }
-	sbr.simple(true);
-	sbr.text(L"Ready");
+	sbr.simple(false);
+
+	SetTimer(hwnd, 3, 1000, 0);
+	post(WM_TIMER, 3, 0);
+
+	sbr.set_text(0, L"Ready");
 }
 
 void MainWindow::onDestroy() {
@@ -62,13 +107,14 @@ void MainWindow::onDestroy() {
 	DeleteObject(hFinderEmpty);
 	DeleteObject(hFinderFilled);
 	DeleteObject(hCurFinding);
+	KillTimer(hwnd, 3);
 
 	// 保存窗口位置
 	RECT rc{}; GetWindowRect(hwnd, &rc);
-    app::config["app.main_window.userwindow.x"] = rc.left;
-    app::config["app.main_window.userwindow.y"] = rc.top;
+	app::config["app.main_window.userwindow.x"] = rc.left;
+	app::config["app.main_window.userwindow.y"] = rc.top;
 	app::config["app.main_window.userwindow.width"] = rc.right - rc.left;
-    app::config["app.main_window.userwindow.height"] = rc.bottom - rc.top;
+	app::config["app.main_window.userwindow.height"] = rc.bottom - rc.top;
 
 	if (app::no_main_window) return;
 	// 如果所有 MainWindow 都关闭了，则退出应用程序
@@ -77,6 +123,18 @@ void MainWindow::onDestroy() {
 	}
 	// 只剩下我们自己了
 	PostQuitMessage(0);
+}
+
+void MainWindow::onTimer(EventData& ev) {
+	switch (ev.wParam) {
+	case 3:
+		// 更新时间
+		sbr.set_text(1, current_time());
+		break;
+	default:
+		return;
+	}
+	ev.preventDefault();
 }
 
 void MainWindow::onClose(EventData& ev) {
@@ -106,7 +164,7 @@ void MainWindow::hideMainWindow() {
 }
 
 void MainWindow::init_controls() {
-	text_targetHwnd = Static(hwnd, L"Target &HWND:", 100, 24);
+	text_targetHwnd = Static(hwnd, L"Target &HWND:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
 	text_targetHwnd.create();
 
 	edit_targetHwnd = Edit(hwnd, L"0", 120, 10);
@@ -124,13 +182,13 @@ void MainWindow::init_controls() {
 	finder.add_style(SS_ICON | SS_CENTERIMAGE);
 	finder.send(STM_SETIMAGE, IMAGE_ICON, (LPARAM)hFinderFilled);
 
-	text_clsName = Static(hwnd, L"| &Class name:", 1, 1);
+	text_clsName = Static(hwnd, L"| &Class name:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
 	text_clsName.create();
 	edit_clsName = Edit(hwnd, L"", 1, 1);
 	edit_clsName.create();
 	edit_clsName.readonly(true);
 
-	text_winTitle = Static(hwnd, L"Window &Title:", 1, 1);
+	text_winTitle = Static(hwnd, L"Window &Title:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
 	edit_winTitle = Edit(hwnd, L"", 1, 1);
 	btn_applyTitle = Button(hwnd, L"&Apply", 1, 1);
 	text_winTitle.create();
@@ -138,8 +196,82 @@ void MainWindow::init_controls() {
 	btn_applyTitle.create();
 
 	btn_applyTitle.onClick([this](EventData& ev) {
-		if (target) SetWindowTextW(target, edit_winTitle.text().c_str());
+		if (target) {
+			auto txt = edit_winTitle.text();
+			SetLastError(0);
+			bool ok = SetWindowTextW(target, txt.c_str());
+			DWORD ec = GetLastError();
+			if (ec != 0) ok = false;
+			wop_report_result(ok, ec);
+		}
 		else MessageBoxW(hwnd, L"No window selected", L"Error", MB_OK | MB_ICONERROR);
+	});
+
+	text_parentWin = Static(hwnd, L"&Parent Window:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
+	edit_parentWin = Edit(hwnd, L"", 1, 1);
+	btn_selectParent = Button(hwnd, L"&Switch To", 1, 1);
+	text_parentWin.create();
+	edit_parentWin.create();
+	btn_selectParent.create();
+	edit_parentWin.readonly(true);
+	btn_selectParent.onClick([this](EventData& ev) {
+		if (target) {
+			HWND parent = GetParent(target);
+			if (!parent) {
+				sbr.set_text(0, current_time() + 
+					format(L" 失败: 父窗口无效。 {}", hwnd_strify(parent)));
+			}
+			else {
+				target = parent;
+			}
+			update_target();
+		}
+		else MessageBoxW(hwnd, L"No window selected", L"Error", MB_OK | MB_ICONERROR);
+	});
+
+	group_winOperations = Button(hwnd, L"Window Operations", 1, 1, 0, 0, 0,
+		Button::STYLE & ~BS_CENTER | BS_GROUPBOX);
+	group_winOperations.create();
+
+	cb_showWin = CheckBox(hwnd, L"&Show", 1, 1);
+	cb_enableWin = CheckBox(hwnd, L"&Enabled", 1, 1);
+	btn_b2f = Button(hwnd, L"&Bring to Front", 1, 1);
+	btn_op_shownormal = Button(hwnd, L"&Restore", 1, 1);
+	btn_op_max = Button(hwnd, L"&Maximize", 1, 1);
+	btn_op_min = Button(hwnd, L"&Minimize", 1, 1);
+	cb_showWin.create(); cb_enableWin.create(); btn_b2f.create();
+	btn_op_shownormal.create(); btn_op_min.create(); btn_op_max.create();
+	cb_showWin.onChanged([this] (EventData& ev) {
+		if (!target) { cb_showWin.uncheck(); return; }
+		bool show = cb_showWin.checked();
+		SetLastError(0);
+		ShowWindow(target, show ? SW_SHOW : SW_HIDE);
+		wop_report_result();
+	});
+	cb_enableWin.onChanged([this] (EventData& ev) {
+		if (!target) { cb_enableWin.uncheck(); return; }
+		bool enabled = cb_enableWin.checked();
+		SetLastError(0);
+		EnableWindow(target, enabled);
+		wop_report_result();
+	});
+	btn_b2f.onClick([this] (EventData& ev) {
+		wop_report_result(BringWindowToTop(target));
+	});
+	btn_op_shownormal.onClick([this] (EventData& ev) {
+		SetLastError(0);
+		ShowWindow(target, SW_RESTORE);
+		wop_report_result();
+	});
+	btn_op_min.onClick([this] (EventData& ev) {
+		SetLastError(0);
+		ShowWindow(target, SW_MINIMIZE);
+		wop_report_result();
+	});
+	btn_op_max.onClick([this] (EventData& ev) {
+		SetLastError(0);
+		ShowWindow(target, SW_MAXIMIZE);
+		wop_report_result();
 	});
 }
 
@@ -148,6 +280,7 @@ void MainWindow::init_config() {
 	hideWhenMinimized = app::config.get_or("app.main_window.hide_when_minimized", false);
 	putBottomWhenUse = app::config.get_or("app.main_window.bottom_when_use", false);
 	useHex = app::config.get_or("app.main_window.hwnd_format.hex", true);
+	findMode = app::config.get_or("app.main_window.finder.mode", 0);
 }
 
 void MainWindow::updateMenuStatus() {
@@ -161,6 +294,13 @@ void MainWindow::updateMenuStatus() {
 		ID_MENU_OPTIONS_SHOWFORMAT_HEX,
 		useHex ? ID_MENU_OPTIONS_SHOWFORMAT_HEX : ID_MENU_OPTIONS_SHOWFORMAT_DEC,
 		MF_BYCOMMAND);
+	CheckMenuRadioItem(menu,
+		ID_MENU_OPTIONS_WLPREF_CONTROLS,
+		ID_MENU_OPTIONS_WLPREF_ROOTOWNER,
+		((findMode == GA_ROOTOWNER) ? ID_MENU_OPTIONS_WLPREF_ROOTOWNER : (
+			(findMode == GA_ROOT) ? ID_MENU_OPTIONS_WLPREF_TOPLEVEL : ID_MENU_OPTIONS_WLPREF_CONTROLS)
+		),
+		MF_BYCOMMAND);
 }
 
 void MainWindow::doLayout(EventData& ev) {
@@ -170,6 +310,7 @@ void MainWindow::doLayout(EventData& ev) {
 	RECT rc = { 0 }; GetClientRect(hwnd, &rc);
 	LONG w = rc.right - rc.left, h = rc.bottom - rc.top;
 
+	// 调整控件位置
 	text_targetHwnd.resize(10, 10, 100, 24);
 	edit_targetHwnd.resize(120, 10, 110, 24);
 	finder.resize(240-4, 10-4, 32, 32);
@@ -178,19 +319,25 @@ void MainWindow::doLayout(EventData& ev) {
 	text_winTitle.resize(10, 44, 100, 24);
 	edit_winTitle.resize(120, 44, w - 200, 24);
 	btn_applyTitle.resize(w - 70, 44, 60, 24);
+	text_parentWin.resize(10, 78, 100, 24);
+	edit_parentWin.resize(120, 78, w - 230, 24);
+	btn_selectParent.resize(w - 100, 78, 90, 24);
+	group_winOperations.resize(10, 110, w - 20, h - 250);
+	cb_showWin.resize(20, 135, 60, 25);
+	cb_enableWin.resize(90, 135, 80, 25);
+	btn_b2f.resize(180, 135, w - 470, 25);
+	btn_op_shownormal.resize(w - 280, 135, 80, 25);
+	btn_op_min.resize(w - 190, 135, 80, 25);
+	btn_op_max.resize(w - 100, 135, 80, 25);
 
+	// 调整状态栏大小
 	sbr.post((UINT)ev.message, ev.wParam, ev.lParam);
+	int parts[] = { w - 80, w };
+	sbr.set_parts(2, parts);
 }
 
 void MainWindow::paint(EventData& ev) {
-	ev.returnValue(0);
-
-	PAINTSTRUCT ps;
-	HDC hdc = BeginPaint(hwnd, &ps);
-	// TODO: 在此处添加使用 hdc 的任何绘图代码...
-
-
-	EndPaint(hwnd, &ps);
+	
 }
 
 void MainWindow::startFind(EventData& ev) {
@@ -218,11 +365,15 @@ void MainWindow::startFind(EventData& ev) {
 		SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 1, 1, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
 	locator.start();
+	locator.mode = findMode;
 	locator.setCallback([this](HWND target) {
 		if (this->hwnd == target) return;
 		this->target = target;
 		update_target();
+		sbr.set_text(0, L"当前目标窗口: " + std::to_wstring((ULONG_PTR)target));
 	});
+
+	sbr.set_text(0, L"正在查找窗口...");
 }
 
 void MainWindow::duringFind(EventData& ev) {
@@ -248,6 +399,9 @@ void MainWindow::endFind(EventData& ev) {
 		SetWindowPos(hwnd, isTopMost ? HWND_TOPMOST : HWND_TOP, 0, 0, 1, 1, SWP_NOMOVE | SWP_NOSIZE);
 	// 获取窗口
 	locator.end();
+	sbr.set_text(0, L"Ready");
+	InvalidateRect(hwnd, NULL, TRUE);
+	UpdateWindow(hwnd);
 	if (this->hwnd == locator.target()) return;
 	target = locator.target();
 	update_target();
@@ -259,21 +413,39 @@ void MainWindow::update_target() {
 		edit_targetHwnd.text(L"0"); // NULL
 		edit_clsName.text(L"");
 		edit_winTitle.text(L"");
+		edit_parentWin.text(L"NULL");
 		return;
 	}
 
-	if (useHex) {
-		edit_targetHwnd.text(std::format(L"0x{:X}", reinterpret_cast<ULONGLONG>(target)));
-	}
-	else {
-		edit_targetHwnd.text(std::to_wstring(reinterpret_cast<ULONGLONG>(target)));
-	}
+	if (IsHungAppWindow(target))
+		edit_targetHwnd.text(hwnd_strify(target) + L" (hung window)");
+	else edit_targetHwnd.text(hwnd_strify(target));
 
 	auto buffer = make_unique<wchar_t[]>(32768);
-	GetClassNameW(target, buffer.get(), 256); // 窗口类最大 256 字符
+	WCHAR wc[260]{};
+	GetClassNameW(target, buffer.get(), 260); // 窗口类最大 256 字符
 	edit_clsName.text(buffer.get());
 	GetWindowTextW(target, buffer.get(), 32768);
-    edit_winTitle.text(buffer.get());
+	edit_winTitle.text(buffer.get());
+	HWND p = GetParent(target);
+	if (IsWindow(p)) {
+		GetClassNameW(p, wc, 260);
+		GetWindowTextW(p, buffer.get(), 32768);
+		edit_parentWin.text(format(L"({}) [{}] Class:[{}]", 
+			hwnd_strify(p), buffer.get(), wc));
+	}
+	else {
+		edit_parentWin.text(L"NULL");
+	}
+
+	cb_showWin.check(IsWindowVisible(target));
+	cb_enableWin.check(IsWindowEnabled(target));
+}
+
+void MainWindow::wop_report_result(bool ok, DWORD code) {
+	wstring text = ok ? success_text : ErrorChecker(code).message();
+	sbr.set_text(0, current_time() + L" " + text);
+	update_target();
 }
 
 void MainWindow::onMenu(EventData& ev) {
@@ -327,7 +499,7 @@ void MainWindow::onMenu(EventData& ev) {
 		DialogBox(hInst, MAKEINTRESOURCE(IDD_DIALOG_ABOUT), hwnd, (
 			[](HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)->LRESULT {
 				switch (message) {
-                    case WM_INITDIALOG:
+					case WM_INITDIALOG:
 						return TRUE;
 					case WM_COMMAND:
 						switch (LOWORD(wParam)) {
@@ -342,11 +514,29 @@ void MainWindow::onMenu(EventData& ev) {
 								return FALSE;
 						}
 						return TRUE;
-                    default:
+					default:
 						return FALSE;
-                }
+				}
 			}
 		));
+		break;
+	case ID_MENU_OPTIONS_WLPREF_HELP:
+		TaskDialog(hwnd, NULL, L"帮助", L"窗口查找偏好",
+			L"控件		- 默认模式。查找窗口内的控件。\n"
+			L"顶级窗口	- GA_ROOT。查找控件所属的根窗口。\n"
+			L"根窗口		- GA_ROOTOWNER。查找窗口的所属者。",
+			TDCBF_CANCEL_BUTTON, TD_INFORMATION_ICON, NULL
+		);
+		break;
+	case ID_MENU_OPTIONS_WLPREF_CONTROLS:
+	case ID_MENU_OPTIONS_WLPREF_TOPLEVEL:
+	case ID_MENU_OPTIONS_WLPREF_ROOTOWNER:
+		findMode = (ev.wParam == ID_MENU_OPTIONS_WLPREF_CONTROLS) ? 0 :
+			((ev.wParam == ID_MENU_OPTIONS_WLPREF_TOPLEVEL) ?
+				GA_ROOT : GA_ROOTOWNER);
+		app::config["app.main_window.finder.mode"] = findMode;
+		updateMenuStatus();
+		update_target();
 		break;
 	default:
 		return;

@@ -11,7 +11,7 @@ ns_declare(WindowCustomizeToolV2_app);
 class SettingsDialog : public Window {
 public:
 	SettingsDialog() : Window(L"设置 - Window Customize Tool V2",
-		640, 480, 0, 0,
+		600, 400, 0, 0,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX) {}
 
 protected:

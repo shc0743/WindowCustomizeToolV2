@@ -12,6 +12,7 @@ public:
 	WindowLocator() {};
 	virtual ~WindowLocator() = default;
 
+	int mode = 0;
 protected:
 	COLORREF highlight_color = RGB(0, 0, 0);
 	UINT highlight_width = 5;
@@ -22,6 +23,9 @@ public:
 	virtual void during();
 	virtual void end();
 	virtual HWND target() const;
+
+private:
+	void getwin();
 
 protected:
 	std::function<void(HWND)> callback;
