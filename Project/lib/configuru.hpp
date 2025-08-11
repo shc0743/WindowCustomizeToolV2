@@ -83,6 +83,17 @@ www.github.com/emilk/configuru
 #include <utility>
 #include <vector>
 
+//(*)MODIFIED START
+#ifndef CONFIGURU_ONERROR
+class ConfiguruError : public std::runtime_error {
+public:
+	ConfiguruError(std::string str) : runtime_error(str) {}
+};
+	#define CONFIGURU_ONERROR(message_str) \
+		throw ConfiguruError(message_str)
+#endif // CONFIGURU_ONERROR
+//(*)MODIFIED END
+
 #ifndef CONFIGURU_ONERROR
 	#define CONFIGURU_ONERROR(message_str) \
 		throw std::runtime_error(message_str)

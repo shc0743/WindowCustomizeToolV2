@@ -19,6 +19,12 @@ protected:
 	HWND m_target = NULL;
 
 public:
+	COLORREF get_highlight_color() const { return highlight_color; }
+	UINT get_highlight_width() const { return highlight_width; }
+	void set_highlight_color(COLORREF color) { highlight_color = color; }
+	void set_highlight_width(UINT width) { highlight_width = width; }
+
+public:
 	virtual void start();
 	virtual void during();
 	virtual void end();
@@ -32,12 +38,6 @@ protected:
 public:
 	inline void setCallback(std::function<void(HWND)> callback) {
 		this->callback = callback;
-	}
-	inline void set_highlight_color(COLORREF color) {
-		highlight_color = color;
-	}
-	inline void set_highlight_width(UINT width) {
-		highlight_width = width;
 	}
 };
 

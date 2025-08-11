@@ -7,6 +7,7 @@ using namespace std;
 HICON MainWindow::app_icon;
 
 using namespace WindowCustomizeToolV2_app;
+using namespace WCTv2::winlib;
 
 
 wstring MainWindow::current_time() {
@@ -117,6 +118,7 @@ void MainWindow::onCreated() {
 	post(WM_TIMER, 3, 0);
 
 	sbr.set_text(0, L"Ready");
+	init_success = true;
 }
 
 void MainWindow::onDestroy() {
@@ -125,6 +127,8 @@ void MainWindow::onDestroy() {
 	DeleteObject(hFinderFilled);
 	DeleteObject(hCurFinding);
 	KillTimer(hwnd, 3);
+
+	if (!init_success) return;
 
 	// 保存窗口位置
 	RECT rc{}; GetWindowRect(hwnd, &rc);
@@ -249,6 +253,7 @@ void MainWindow::init_controls() {
 	group_winOperations = Button(hwnd, L"Window Operations", 1, 1, 0, 0, 0,
 		Button::STYLE & ~BS_CENTER | BS_GROUPBOX);
 	group_winOperations.create();
+	group_winOperations.remove_style(WS_TABSTOP);
 
 	cb_showWin = CheckBox(hwnd, L"&Show", 1, 1);
 	cb_enableWin = CheckBox(hwnd, L"&Enabled", 1, 1);
@@ -289,6 +294,58 @@ void MainWindow::init_controls() {
 		SetLastError(0);
 		ShowWindow(target, SW_MAXIMIZE);
 		wop_report_result();
+	});
+
+	btn_highlight = Button(hwnd, L"Highlight", 1, 1);
+	btn_showpos = Button(hwnd, L"Locate", 1, 1);
+	text_winpos = Static(hwnd, L"Pos: 0-0_0x0", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
+	btn_swp = Button(hwnd, L"SetWindowPos", 1, 1);
+	btn_resize = Button(hwnd, L"Resize", 1, 1);
+	btn_highlight.create(); btn_showpos.create();
+	text_winpos.create(); btn_swp.create(); btn_resize.create();
+
+	btn_highlight.onClick([this](EventData&) {
+		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
+		thread th([](HWND t, WindowLocator locator) {
+			for (int i = 0; i < 5; ++i) {
+				HighlightWindow(t, locator.get_highlight_color(), locator.get_highlight_width());
+				Sleep(50);
+				RestoreScreenContent();
+				Sleep(50);
+			}
+		}, target, locator);
+		th.detach();
+
+		wop_report_result(true);
+	});
+	btn_showpos.onClick([this](EventData&) {
+		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
+		thread th([](HWND t) {
+			OverlayWindow overlay;
+			overlay.create();
+			// 获取目标窗口大小
+			RECT rc{}; GetWindowRect(t, &rc);
+			overlay.resize(rc);
+			overlay.show();
+			overlay.closeAfter(2000);
+			overlay.run();
+		}, target);
+		th.detach();
+		wop_report_result(true);
+	});
+	btn_resize.onClick([this](EventData&) {
+		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
+		thread th([](HWND t) {
+			OverlayWindow overlay;
+			overlay.create();
+			// 获取目标窗口大小
+			RECT rc{}; GetWindowRect(t, &rc);
+			overlay.resize(rc);
+			overlay.show();
+			overlay.run();
+		}, target);
+		th.detach();
+		wop_report_result(true);
 	});
 }
 
@@ -346,6 +403,11 @@ void MainWindow::doLayout(EventData& ev) {
 	btn_op_shownormal.resize(w - 280, 135, 80, 25);
 	btn_op_min.resize(w - 190, 135, 80, 25);
 	btn_op_max.resize(w - 100, 135, 80, 25);
+	btn_highlight.resize(20, 170, 100, 25);
+	btn_showpos.resize(130, 170, 80, 25);
+	text_winpos.resize(220, 170, w - 460, 25);
+	btn_swp.resize(w - 230, 170, 120, 25);
+	btn_resize.resize(w - 100, 170, 80, 25);
 
 	// 调整状态栏大小
 	sbr.post((UINT)ev.message, ev.wParam, ev.lParam);

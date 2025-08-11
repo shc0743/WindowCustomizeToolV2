@@ -23,8 +23,9 @@ namespace app {
 	bool checkwin();
 	Window& firstAliveWindow();
 	MainWindow& firstAliveMainWindow();
-	void create_win();
+	bool create_win();
 	void quit(bool soft = true);
+	extern std::wstring cfg_path;
 	int load_config(std::wstring cfg_path);
 	void save_config();
 };

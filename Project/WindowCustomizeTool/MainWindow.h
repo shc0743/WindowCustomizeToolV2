@@ -33,6 +33,7 @@ protected:
 	// 控件
 	void init_controls();
 	void init_config();
+	bool init_success = false;
 	void updateMenuStatus();
 	void doLayout(EventData& ev);
 	void paint(EventData& ev);
@@ -45,6 +46,8 @@ protected:
 	Button group_winOperations;
 	CheckBox cb_enableWin, cb_showWin;
 	Button btn_b2f, btn_op_shownormal, btn_op_min, btn_op_max;
+	Button btn_highlight, btn_showpos; Static text_winpos;
+	Button btn_swp, btn_resize;
 	void startFind(EventData& ev);
 	void duringFind(EventData& ev);
 	void endFind(EventData& ev);

@@ -41,15 +41,78 @@ namespace app {
 		}
 		throw runtime_error("No alive windows found");
 	}
-	void create_win() {
+	int init_config();
+	template<typename T, typename ErrClass, class... _FnArgs, class... _Args>
+	T handle_error(wstring reason, const ErrClass& exc, T value_if_fail, T(*handler)(_FnArgs...), _Args&&... _Ax) {
+		int btn = 0, btns = 0;
+		bool isConfigErr = dynamic_cast<const ConfiguruError*>(&exc);
+		if (isConfigErr) btns = TDCBF_YES_BUTTON |
+			TDCBF_OK_BUTTON | TDCBF_RETRY_BUTTON;
+		TaskDialog(NULL, NULL, reason.c_str(), reason.c_str(),
+			format(L"错误原因:\n{}\n\n上一次错误代码: {}{}",
+				str_wstr(exc.what()),
+				ErrorChecker().message(),
+				isConfigErr ? L"\n\n这应该是由于配置文件出现异常导致的。\n"
+				L"可以尝试通过删除配置文件来解决此问题，但这会导致配置文件被"
+				L"重置。\n也可以尝试打开配置文件以修复错误。\n\n要重置配置"
+				L"文件，请单击“是”。\n要打开配置文件以修复错误，请单击“确定”"
+				L"。\n要再试一次，请单击“重试”。" : L""
+			).c_str(),
+			TDCBF_CANCEL_BUTTON | btns, TD_ERROR_ICON, &btn);
+		switch (btn) {
+		case IDOK:
+		{
+			STARTUPINFO si{}; PROCESS_INFORMATION pi{};
+			si.cb = sizeof(si);
+			wstring cl = L"notepad.exe \"" + cfg_path + L"\"";
+			auto buffer = make_unique<WCHAR[]>(cl.size() + 1);
+			wcscpy_s(buffer.get(), cl.size() + 1, cl.c_str());
+			if (CreateProcessW(NULL, buffer.get(),
+				0, 0, 0, 0, 0, 0, &si, &pi)) {
+				CloseHandle(pi.hThread);
+				WaitForSingleObject(pi.hProcess, INFINITE);
+				CloseHandle(pi.hProcess);
+				return handler(std::forward<_Args>(_Ax)...);
+			}
+			else {
+				MessageBoxW(NULL, L"无法打开文件！", NULL, MB_ICONERROR);
+			}
+			break;
+		}
+		case IDYES:
+			if (!DeleteFileW(cfg_path.c_str())) {
+				MessageBoxW(NULL, L"无法删除文件！", NULL, MB_ICONERROR);
+				break;
+			}
+			Sleep(100);
+			if (int i = init_config()) {
+				MessageBoxW(NULL, L"配置文件初始化失败！", NULL, MB_ICONERROR);
+				break;
+			}
+			[[fallthrough]];
+		case IDRETRY:
+			return handler(std::forward<_Args>(_Ax)...);
+		default:
+			return value_if_fail;
+		}
+		return value_if_fail;
+	}
+	bool create_win() {
 		MainWindow* new_window = new MainWindow();
-		new_window->create();
-		//new_window->center();
-		new_window->show(1);
-		new_window->text(new_window->text() +
-			L" (" + to_wstring(win.size() + 1) + L")");
-		new_window->focus();
+		try {
+			new_window->create();
+			//new_window->center();
+			new_window->show(1);
+			new_window->text(new_window->text() +
+				L" (" + to_wstring(win.size() + 1) + L")");
+			new_window->focus();
+		}
+		catch (exception& exc) {
+			delete new_window;
+			return handle_error(L"应用程序无法创建窗口！", exc, false, create_win);
+		}
 		win.push_back((new_window));
+		return true;
 	}
 	void quit(bool soft) {
 		bool ok = false;
@@ -78,23 +141,13 @@ namespace app {
 			}
 			else config = configuru::parse_file(wstr_str(cfg_path), configuru::JSON);
 		}
+		catch (configuru::ParseError& exc) {
+			// 配置文件异常，询问用户是否重置
+			return handle_error(L"配置文件解析失败", ConfiguruError(exc.what()), (int)ERROR_FILE_CORRUPT, load_config, cfg_path);
+		}
 		catch (exception& exc) {
 			// 配置文件异常，询问用户是否重置
-			int user = 0;
-			TaskDialog(NULL, NULL, L"Window Customize Tool V2 - 配置文件异常",
-				L"配置文件解析失败，是否尝试重置配置？",
-				str_wstr(exc.what()).c_str(), TDCBF_YES_BUTTON | TDCBF_CANCEL_BUTTON,
-				TD_WARNING_ICON, &user);
-			if (user != IDYES) return ERROR_FILE_CORRUPT;
-			// 重置配置文件
-			try {
-				configuru::dump_file(wstr_str(cfg_path), config, configuru::JSON);
-			}
-			catch (...) {
-				// 无法写入指定文件
-				// TODO: 报告此问题
-				fprintf(stderr, "[ERROR] Cannot write config file\n");
-			}
+			return handle_error(L"配置文件加载失败", exc, (int)ERROR_FILE_CORRUPT, load_config, cfg_path);
 		}
 		return 0;
 	}
@@ -108,47 +161,10 @@ namespace app {
 			fprintf(stderr, "[ERROR] Cannot save config\n");
 		}
 	}
-}
-
-
-using namespace app;
-
-
-int WINAPI wWinMain(
-	_In_ HINSTANCE hInstance,
-	_In_opt_ HINSTANCE hPrevInstance,
-	_In_ LPWSTR lpCmdLine,
-	_In_ int nShowCmd
-) {
-	::hInst = hInstance;
-
-	// 初始化 COM 库
-	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-	if (FAILED(hr)) {
-		MessageBox(NULL, L"COM 初始化失败", L"错误", MB_ICONERROR);
-		return -1;
-	}
-	// 初始化公共控件库
-	INITCOMMONCONTROLSEX icc{};
-	icc.dwSize = sizeof(INITCOMMONCONTROLSEX);
-	icc.dwICC = ICC_ALL_CLASSES;
-	InitCommonControlsEx(&icc);
-	// 设置全局选项，关闭所有窗口时退出应用程序
-	Window::set_global_option(Window::Option_QuitWhenWindowAllClosed, true);
-	Window::set_global_option(Window::Option_DebugMode, true);
-	// 创建并显示主窗口
-	try {
-		// 如果已经有窗口，那么不单独创建进程
-		if (HWND hWnd = FindWindowW(IPCWindow().get_class_name().c_str(), NULL)) {
-			if (SendMessageTimeoutW(hWnd, WM_APP + WM_CREATE,
-				GetCurrentProcessId(), 0, SMTO_BLOCK, 5000, NULL)) {
-				return 0;
-			}
-		}
-
+	int init_config() {
 		// 加载配置
 		WCHAR app_path[2048]{};
-		GetModuleFileNameW(hInstance, app_path, 2048);
+		GetModuleFileNameW(hInst, app_path, 2048);
 		// 首先判断应用程序是否是“安装”式（如果是“安装”式，应该在用户文件夹中使用配置文件）
 		if (file_exists(app_path + L".setup"s)) {
 			// installed
@@ -176,6 +192,47 @@ int WINAPI wWinMain(
 			int ret = load_config(app_path + L".config.json"s);
 			if (ret != 0) return ret;
 		}
+		return 0;
+	}
+}
+
+
+using namespace app;
+
+
+int WINAPI wWinMain(
+	_In_ HINSTANCE hInstance,
+	_In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPWSTR lpCmdLine,
+	_In_ int nShowCmd
+) {
+	::hInst = hInstance;
+
+	// 初始化 COM 库
+	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	if (FAILED(hr)) {
+		MessageBoxW(NULL, L"COM 初始化失败", L"错误", MB_ICONERROR);
+		return -1;
+	}
+	// 初始化公共控件库
+	INITCOMMONCONTROLSEX icc{};
+	icc.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	icc.dwICC = ICC_ALL_CLASSES;
+	InitCommonControlsEx(&icc);
+	// 设置全局选项，关闭所有窗口时退出应用程序
+	Window::set_global_option(Window::Option_QuitWhenWindowAllClosed, true);
+	Window::set_global_option(Window::Option_DebugMode, true);
+	// 创建并显示主窗口
+	try {
+		// 如果已经有窗口，那么不单独创建进程
+		if (HWND hWnd = FindWindowW(IPCWindow().get_class_name().c_str(), NULL)) {
+			if (SendMessageTimeoutW(hWnd, WM_APP + WM_CREATE,
+				GetCurrentProcessId(), 0, SMTO_BLOCK, 5000, NULL)) {
+				return 0;
+			}
+		}
+
+		if (int i = init_config()) return i;
 		// 通过 RAII 确保应用程序退出前保存配置
 		w32oop::util::RAIIHelper configSaver([] {
 			save_config();
@@ -260,7 +317,9 @@ int WINAPI wWinMain(
 
 		icon.setIcon(MainWindow().get_window_icon());
 		if (wstring(lpCmdLine).find(L"--no-main-window") == wstring::npos) {
-			app::create_win();
+			if (!app::create_win()) {
+				return STATUS_BREAKPOINT;
+			}
 		}
 		else {
 			no_main_window = true;
