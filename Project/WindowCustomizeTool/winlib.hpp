@@ -13,3 +13,9 @@ inline void RestoreScreenContent() {
 	HighlightWindow(NULL, 0, 0); // 传入 NULL 擦除旧边框
 }
 
+
+// 获取窗口是否为置顶
+inline bool IsWindowTopMost(HWND hWnd) {
+	return (GetWindowLong(hWnd, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
+}
+

@@ -28,7 +28,7 @@ wstring MainWindow::current_time() {
 		tm.tm_sec);   // 秒 (0-59)
 }
 
-std::wstring MainWindow::hwnd_strify(HWND hWnd) {
+std::wstring MainWindow::hwnd_strify(HWND hWnd) const {
 	if (useHex) {
 		return (std::format(L"0x{:X}", reinterpret_cast<ULONGLONG>(hWnd)));
 	}
@@ -109,8 +109,10 @@ void MainWindow::onCreated() {
 	sbr.simple(false);
 
 	SetTimer(hwnd, 3, 1000, 0);
+	SetTimer(hwnd, 4, (UINT)app::config.get_or("app.main_window.target.auto_refresh.time", 2000), 0);
 	post(WM_TIMER, 3, 0);
 
+	update_target();
 	sbr.set_text(0, L"Ready");
 	init_success = true;
 }
@@ -121,6 +123,7 @@ void MainWindow::onDestroy() {
 	DeleteObject(hFinderFilled);
 	DeleteObject(hCurFinding);
 	KillTimer(hwnd, 3);
+	KillTimer(hwnd, 4);
 
 	if (!init_success) return;
 
@@ -145,6 +148,9 @@ void MainWindow::onTimer(EventData& ev) {
 	case 3:
 		// 更新时间
 		sbr.set_text(1, current_time());
+		break;
+	case 4:
+		if (autoRefresh) update_target();
 		break;
 	default:
 		return;
@@ -336,10 +342,39 @@ void MainWindow::init_controls() {
 			overlay.setTarget(target);
 			overlay.show();
 			overlay.run(&overlay);
-			if (IsWindow(self)) EnableWindow(self, TRUE);
+			if (IsWindow(self)) {
+				EnableWindow(self, TRUE);
+				SetForegroundWindow(self);
+			}
 		}, target, hwnd);
 		th.detach();
 		wop_report_result(true);
+	});
+	btn_swp.onClick([this](EventData&) {
+		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
+		DialogBoxParamW(hInst, MAKEINTRESOURCEW(IDD_DIALOG_SWP_ARGS), hwnd, SwpDlgHandler, (LPARAM)target);
+	});
+
+	cb_topmost = CheckBox(hwnd, L"Always on top", 1, 1); cb_topmost.create();
+	btn_zorder = Button(hwnd, L"Z-order", 1, 1); btn_zorder.create();
+	btn_border = Button(hwnd, L"Border...", 1, 1); btn_border.create();
+	btn_corner = Button(hwnd, L"Corner...", 1, 1); btn_corner.create();
+
+	cb_topmost.onChanged([this](EventData&) {
+		if (!target) { cb_topmost.uncheck(); return; }
+		bool current_state = IsWindowTopMost(target);
+		if (cb_topmost.checked() == current_state) return;
+		bool ok = SetWindowPos(target, cb_topmost.checked() ? HWND_TOPMOST : hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+		wop_report_result(ok);
+	});
+	btn_zorder.onClick([this](EventData&) {
+		context_anyorder_internal(1, btn_zorder);
+	});
+	btn_border.onClick([this](EventData&) {
+		context_anyorder_internal(2, btn_border);
+	});
+	btn_corner.onClick([this](EventData&) {
+		context_anyorder_internal(3, btn_corner);
 	});
 }
 
@@ -349,6 +384,11 @@ void MainWindow::init_config() {
 	putBottomWhenUse = app::config.get_or("app.main_window.bottom_when_use", false);
 	useHex = app::config.get_or("app.main_window.hwnd_format.hex", true);
 	findMode = app::config.get_or("app.main_window.finder.mode", 0);
+	autoRefresh = app::config.get_or("app.main_window.target.auto_refresh.enabled", true);
+
+	if (auto corner = (DWM_WINDOW_CORNER_PREFERENCE)app::config.get_or("app.main_window.visual.corner", 0)) {
+        DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, &corner, sizeof(corner));
+	}
 }
 
 void MainWindow::updateMenuStatus() {
@@ -369,6 +409,7 @@ void MainWindow::updateMenuStatus() {
 			(findMode == GA_ROOT) ? ID_MENU_OPTIONS_WLPREF_TOPLEVEL : ID_MENU_OPTIONS_WLPREF_CONTROLS)
 		),
 		MF_BYCOMMAND);
+	CheckMenuItem(menu, ID_MENU_OPTIONS_AUTOREFRESH, autoRefresh ? MF_CHECKED : MF_UNCHECKED);
 }
 
 void MainWindow::doLayout(EventData& ev) {
@@ -402,6 +443,10 @@ void MainWindow::doLayout(EventData& ev) {
 	text_winpos.resize(220, 170, w - 460, 25);
 	btn_swp.resize(w - 230, 170, 120, 25);
 	btn_resize.resize(w - 100, 170, 80, 25);
+	cb_topmost.resize(20, 205, 120, 25);
+	btn_zorder.resize(150, 205, 80, 25);
+	btn_border.resize(240, 205, 80, 25);
+	btn_corner.resize(330, 205, 80, 25);
 
 	// 调整状态栏大小
 	sbr.post((UINT)ev.message, ev.wParam, ev.lParam);
@@ -488,7 +533,7 @@ void MainWindow::update_target() {
 		edit_winTitle.text(L"");
 		edit_parentWin.text(L"NULL");
 		cb_showWin.check(false);
-        cb_enableWin.check(false);
+		cb_enableWin.check(false);
 		text_winpos.text(L"Pos: --");
 		return;
 	}
@@ -521,8 +566,9 @@ void MainWindow::update_target() {
 	text_winpos.text(format(L"Pos: ({},{});{}x{}",
 		rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top
 	));
-}
 
+	cb_topmost.check(IsWindowTopMost(target));
+}
 void MainWindow::wop_report_result(bool ok, DWORD code) {
 	wstring text = ok ? success_text : ErrorChecker(code).message();
 	sbr.set_text(0, current_time() + L" " + text);
@@ -646,6 +692,11 @@ void MainWindow::onMenu(EventData& ev) {
 		update_target();
 		sbr.set_text(0, current_time() + L" 窗口信息更新成功。");
 		break;
+	case ID_MENU_OPTIONS_AUTOREFRESH:
+		autoRefresh = !autoRefresh;
+		app::config["app.main_window.target.auto_refresh.enabled"] = autoRefresh;
+		updateMenuStatus();
+		break;
 	default:
 		return;
 	}
@@ -676,4 +727,101 @@ void MainWindow::onMinimize(EventData& ev) {
 	ev.preventDefault();
 	hide();
 }
+
+LRESULT MainWindow::SwpDlgHandler(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	switch (message) {
+	case WM_INITDIALOG:
+		if (!lParam) return FALSE;
+		SetPropW(hDlg, L"target", (HWND)lParam);
+		// 获取目标窗口的位置并填充输入框
+		{
+			RECT rc{}; HWND target = (HWND)lParam;
+			GetWindowRect(target, &rc);
+
+			SetDlgItemInt(hDlg, IDC_EDIT_SWP_X, rc.left, FALSE);
+			SetDlgItemInt(hDlg, IDC_EDIT_SWP_Y, rc.top, FALSE);
+			SetDlgItemInt(hDlg, IDC_EDIT_SWP_cx, rc.right - rc.left, FALSE);
+			SetDlgItemInt(hDlg, IDC_EDIT_SWP_cy, rc.bottom - rc.top, FALSE);
+			SetDlgItemInt(hDlg, IDC_EDIT_SWP_uFlags, 0, TRUE);
+			SetDlgItemInt(hDlg, IDC_EDIT_SWP_hWndInsertAfter, (INT)LONG_PTR(
+				IsWindowTopMost(target) ? HWND_TOPMOST : 0
+			), TRUE);
+		}
+		break;
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case IDC_BUTTON_SWP_HELP:
+			ShellExecuteW(NULL, L"open", L"https://docs.microsoft.com/en-us/windows/"
+				"win32/api/winuser/nf-winuser-setwindowpos", NULL, NULL, SW_NORMAL);
+			break;
+		case IDOK:
+		case IDC_BUTTON_SWP_APPLY:
+			// 应用更改
+		{
+			int
+				x = GetDlgItemInt(hDlg, IDC_EDIT_SWP_X, NULL, TRUE),
+				y = GetDlgItemInt(hDlg, IDC_EDIT_SWP_Y, NULL, TRUE),
+				cx = GetDlgItemInt(hDlg, IDC_EDIT_SWP_cx, NULL, TRUE),
+				cy = GetDlgItemInt(hDlg, IDC_EDIT_SWP_cy, NULL, TRUE),
+				uFlags = GetDlgItemInt(hDlg, IDC_EDIT_SWP_uFlags, NULL, TRUE),
+				hWndInsertAfter = GetDlgItemInt(hDlg, IDC_EDIT_SWP_hWndInsertAfter, NULL, TRUE);
+			HWND hWnd = (HWND)GetPropW(hDlg, L"target");
+			bool ok = SetWindowPos(hWnd, (HWND)(INT_PTR)hWndInsertAfter, x, y, cx, cy, uFlags);
+			if (!ok) MessageBoxW(hDlg, ErrorChecker().message().c_str(), NULL, MB_ICONERROR);
+		}
+			if (LOWORD(wParam) == IDOK) EndDialog(hDlg, LOWORD(wParam));
+			break;
+		case IDCANCEL:
+			EndDialog(hDlg, LOWORD(wParam));
+			return TRUE;
+		default:
+			return FALSE;
+		}
+		break;
+	default:
+		return FALSE;
+	}
+	return TRUE;
+}
+
+void MainWindow::context_anyorder_internal(int type, Window& btn_element) {
+	if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
+	// 1 - Zorder
+	// 2 - Border
+	// 3 - Corner
+	Menu menu; HWND target = this->target;
+	auto zset = [target](HWND insertAfter) {
+		SetWindowPos(target, insertAfter, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+	};
+	if (type == 1) menu = Menu({
+		MenuItem(L"HWND_TOP", 1, std::bind(zset, HWND_TOP)),
+		MenuItem(L"HWND_BOTTOM", 2, std::bind(zset, HWND_BOTTOM)),
+		MenuItem(L"HWND_TOPMOST", 3, std::bind(zset, HWND_TOPMOST)),
+		MenuItem(L"HWND_NOTOPMOST", 4, std::bind(zset, HWND_NOTOPMOST)),
+	});
+	auto bset = [target](bool borderful) {
+		constexpr auto Frame = WS_CAPTION | WS_THICKFRAME;
+		LONG_PTR style = GetWindowLongPtrW(target, GWL_STYLE);
+		if (borderful) style |= Frame;
+		else style &= ~(Frame);
+        SetWindowLongPtrW(target, GWL_STYLE, style);
+		SetWindowPos(target, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+	};
+	if (type == 2) menu = Menu({
+		MenuItem(L"Border", 1, std::bind(bset, true)),
+		MenuItem(L"Borderless", 2, std::bind(bset, false)),
+	});
+	auto cornerset = [target](DWM_WINDOW_CORNER_PREFERENCE pref) {
+		DwmSetWindowAttribute(target, DWMWA_WINDOW_CORNER_PREFERENCE, &pref, sizeof(pref));
+	};
+	if (type == 3) menu = Menu({
+		MenuItem(L"Default", 1, std::bind(cornerset, DWMWCP_DEFAULT)),
+		MenuItem(L"Do not round", 2, std::bind(cornerset, DWMWCP_DONOTROUND)),
+		MenuItem(L"Round", 3, std::bind(cornerset, DWMWCP_ROUND)),
+		MenuItem(L"Round small", 4, std::bind(cornerset, DWMWCP_ROUNDSMALL)),
+	});
+	RECT rc{}; GetWindowRect(btn_element, &rc);
+	menu.pop(rc.left, rc.bottom);
+}
+
 

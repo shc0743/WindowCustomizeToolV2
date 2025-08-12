@@ -80,13 +80,15 @@
 #define ID_MENU_OPTIONS_WLPREF_CONTROLS 32830
 #define ID_MENU_OPTIONS_WLPREF_TOPLEVEL 32831
 #define ID_MENU_OPTIONS_WLPREF_ROOTOWNER 32832
+#define ID_32833                        32833
+#define ID_MENU_OPTIONS_AUTOREFRESH     32834
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        1801
-#define _APS_NEXT_COMMAND_VALUE         32833
+#define _APS_NEXT_COMMAND_VALUE         32835
 #define _APS_NEXT_CONTROL_VALUE         1636
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

@@ -13,7 +13,7 @@ class MainWindow : public Window {
 public:
 	MainWindow() : Window(L"Window Customize Tool V2", 640, 480, 0, 0, WS_OVERLAPPEDWINDOW, WS_EX_LAYERED) {}
 	~MainWindow() {
-		if (overlay) delete overlay;
+		
 	}
 
 	const std::wstring get_class_name() const override {
@@ -23,7 +23,7 @@ public:
 	}
 
 	static std::wstring current_time();
-	std::wstring hwnd_strify(HWND hWnd);
+	std::wstring hwnd_strify(HWND hWnd) const;
 
 protected:
 	void onCreated() override;
@@ -48,10 +48,12 @@ protected:
 	Button btn_b2f, btn_op_shownormal, btn_op_min, btn_op_max;
 	Button btn_highlight, btn_showpos; Static text_winpos;
 	Button btn_swp, btn_resize;
+	CheckBox cb_topmost; Button btn_zorder, btn_border, btn_corner;
 	void startFind(EventData& ev);
 	void duringFind(EventData& ev);
 	void endFind(EventData& ev);
 	void update_target();
+	void context_anyorder_internal(int type, Window& btn_element);
 	void wop_report_result(bool ok = (GetLastError() == 0), DWORD code = GetLastError());
 	// 查找器
 	WCTv2::winlib::WindowLocator locator;
@@ -63,7 +65,6 @@ protected:
 	HICON hFinderEmpty = 0, hFinderFilled = 0;
 	HWND target = NULL;
 	bool isFinding = false;
-	WindowCustomizeToolV2_app::OverlayWindow* overlay = nullptr;
 
 	// 事件处理程序
 	void onTimer(EventData& ev);
@@ -79,8 +80,11 @@ protected:
 	bool putBottomWhenUse = false;
 	bool useHex = false;
 	int findMode = 0;
+	bool autoRefresh = false;
 
 	void toggleTopMostState();
+
+	static LRESULT CALLBACK SwpDlgHandler(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
 protected:
 	static HICON app_icon;
