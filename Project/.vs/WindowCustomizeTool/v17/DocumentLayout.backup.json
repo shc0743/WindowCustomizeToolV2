@@ -25,7 +25,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 7,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Bookmark",
@@ -44,10 +44,6 @@
               "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
             },
             {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
-            },
-            {
               "$type": "Document",
               "DocumentIndex": 1,
               "Title": "Frame_MainWnd.cpp",
@@ -57,8 +53,24 @@
               "RelativeToolTip": "..\\..\\MyLearn__\\MyWindowCustomizeTool\\WindowCustomizeTool\\Frame_MainWnd.cpp",
               "ViewState": "AgIAAJAFAAAAAAAAAAAgwKoFAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-08-10T02:25:29.151Z",
+              "WhenOpened": "2025-08-10T02:25:29.151Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MainWindow.cpp",
+              "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\MainWindow.cpp",
+              "RelativeDocumentMoniker": "WindowCustomizeTool\\MainWindow.cpp",
+              "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\MainWindow.cpp",
+              "RelativeToolTip": "WindowCustomizeTool\\MainWindow.cpp",
+              "ViewState": "AgIAAGsDAAAAAAAAAAAAAHEDAAAHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-08-09T05:12:12.36Z",
               "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
             },
             {
               "$type": "Document",
@@ -74,19 +86,6 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "MainWindow.cpp",
-              "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\MainWindow.cpp",
-              "RelativeDocumentMoniker": "WindowCustomizeTool\\MainWindow.cpp",
-              "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\MainWindow.cpp",
-              "RelativeToolTip": "WindowCustomizeTool\\MainWindow.cpp",
-              "ViewState": "AgIAABIDAAAAAAAAAAAAABUDAAALAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-08-09T05:12:12.36Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 2,
               "Title": "MainWindow.h",
               "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\MainWindow.h",
@@ -95,8 +94,7 @@
               "RelativeToolTip": "WindowCustomizeTool\\MainWindow.h",
               "ViewState": "AgIAACQAAAAAAAAAAAAjwDIAAABNAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-08-10T03:46:49.709Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-08-10T03:46:49.709Z"
             }
           ]
         }

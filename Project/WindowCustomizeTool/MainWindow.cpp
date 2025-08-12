@@ -890,6 +890,12 @@ void MainWindow::context_anyorder_internal(int type, Window& btn_element) {
 				menu.get_children()[9].check(check_style(WS_SYSMENU));
 				menu.get_children()[10].check(check_style(WS_MINIMIZEBOX));
 				menu.get_children()[11].check(check_style(WS_MAXIMIZEBOX));
+				menu.get_children()[13].check(check_style(WS_HSCROLL));
+				menu.get_children()[14].check(check_style(WS_VSCROLL));
+				menu.get_children()[15].check(check_style(WS_CLIPCHILDREN));
+				menu.get_children()[16].check(check_style(WS_CLIPSIBLINGS));
+				menu.get_children()[17].check(check_style(WS_GROUP));
+				menu.get_children()[18].check(check_style(WS_TABSTOP));
 			}
 			else if (type == 5) {
 				auto basic_style_set = [&style](LONG flag) {
