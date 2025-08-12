@@ -61,21 +61,15 @@ void MainWindow::onCreated() {
 	}, HotKeyOptions::Windowed);
 	register_hot_key(true, false, false, 'R', [this](HotKeyProcData& data) {
 		data.preventDefault();
-		EventData ed; ed.message = WM_MENU_CHECKED; ed.wParam = ID_MENU_WINDOWMANAGER_RELOAD;
-		ed.preventDefault = [] {};
-		onMenu(ed);
+		dispatchEvent(EventData(hwnd, WM_MENU_CHECKED, ID_MENU_WINDOWMANAGER_RELOAD, 0));
 	}, HotKeyOptions::Windowed);
 	register_hot_key(false, false, false, VK_F5, [this](HotKeyProcData& data) {
 		data.preventDefault();
-		EventData ed; ed.message = WM_MENU_CHECKED; ed.wParam = ID_MENU_WINDOWMANAGER_RELOAD;
-		ed.preventDefault = [] {};
-		onMenu(ed);
+		dispatchEvent(EventData(hwnd, WM_MENU_CHECKED, ID_MENU_WINDOWMANAGER_RELOAD, 0));
 	}, HotKeyOptions::Windowed);
 	register_hot_key(true, false, false, 'F', [this](HotKeyProcData& data) {
 		data.preventDefault();
-		EventData ed; ed.message = WM_MENU_CHECKED; ed.wParam = ID_MENU_WINDOW_FIND;
-		ed.preventDefault = [] {};
-		onMenu(ed);
+		dispatchEvent(EventData(hwnd, WM_MENU_CHECKED, ID_MENU_WINDOW_FIND, 0));
 	}, HotKeyOptions::Windowed);
 
 	init_controls();
@@ -298,7 +292,7 @@ void MainWindow::init_controls() {
 
 	btn_highlight = Button(hwnd, L"Highlight", 1, 1);
 	btn_showpos = Button(hwnd, L"Locate", 1, 1);
-	text_winpos = Static(hwnd, L"Pos: 0-0_0x0", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
+	text_winpos = Static(hwnd, L"Pos: --", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
 	btn_swp = Button(hwnd, L"SetWindowPos", 1, 1);
 	btn_resize = Button(hwnd, L"Resize", 1, 1);
 	btn_highlight.create(); btn_showpos.create();
@@ -323,10 +317,9 @@ void MainWindow::init_controls() {
 		thread th([](HWND t) {
 			OverlayWindow overlay;
 			overlay.create();
-			// 获取目标窗口大小
-			RECT rc{}; GetWindowRect(t, &rc);
-			overlay.resize(rc);
+			overlay.setTarget(t);
 			overlay.show();
+			overlay.setClosable(false);
 			overlay.closeAfter(2000);
 			overlay.run();
 		}, target);
@@ -335,15 +328,16 @@ void MainWindow::init_controls() {
 	});
 	btn_resize.onClick([this](EventData&) {
 		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
-		thread th([](HWND t) {
+		disable();
+		thread th([](HWND target, HWND self) {
 			OverlayWindow overlay;
 			overlay.create();
-			// 获取目标窗口大小
-			RECT rc{}; GetWindowRect(t, &rc);
-			overlay.resize(rc);
+			overlay.setType(OverlayWindow::TYPE_PROACTIVE);
+			overlay.setTarget(target);
 			overlay.show();
-			overlay.run();
-		}, target);
+			overlay.run(&overlay);
+			if (IsWindow(self)) EnableWindow(self, TRUE);
+		}, target, hwnd);
 		th.detach();
 		wop_report_result(true);
 	});
@@ -449,7 +443,7 @@ void MainWindow::startFind(EventData& ev) {
 		if (this->hwnd == target) return;
 		this->target = target;
 		update_target();
-		sbr.set_text(0, L"当前目标窗口: " + std::to_wstring((ULONG_PTR)target));
+		sbr.set_text(0, L"当前目标窗口: " + hwnd_strify(target));
 	});
 
 	sbr.set_text(0, L"正在查找窗口...");
@@ -465,6 +459,7 @@ void MainWindow::duringFind(EventData& ev) {
 void MainWindow::endFind(EventData& ev) {
 	if (!isFinding) return;
 	ev.preventDefault();
+	locator.end();
 
 	// 恢复状态
 	isFinding = false;
@@ -477,7 +472,6 @@ void MainWindow::endFind(EventData& ev) {
 	if (putBottomWhenUse)
 		SetWindowPos(hwnd, isTopMost ? HWND_TOPMOST : HWND_TOP, 0, 0, 1, 1, SWP_NOMOVE | SWP_NOSIZE);
 	// 获取窗口
-	locator.end();
 	sbr.set_text(0, L"Ready");
 	InvalidateRect(hwnd, NULL, TRUE);
 	UpdateWindow(hwnd);
@@ -493,6 +487,9 @@ void MainWindow::update_target() {
 		edit_clsName.text(L"");
 		edit_winTitle.text(L"");
 		edit_parentWin.text(L"NULL");
+		cb_showWin.check(false);
+        cb_enableWin.check(false);
+		text_winpos.text(L"Pos: --");
 		return;
 	}
 
@@ -519,6 +516,11 @@ void MainWindow::update_target() {
 
 	cb_showWin.check(IsWindowVisible(target));
 	cb_enableWin.check(IsWindowEnabled(target));
+
+	RECT rc{}; GetWindowRect(target, &rc);
+	text_winpos.text(format(L"Pos: ({},{});{}x{}",
+		rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top
+	));
 }
 
 void MainWindow::wop_report_result(bool ok, DWORD code) {
