@@ -48,7 +48,7 @@ protected:
 	Button btn_b2f, btn_op_shownormal, btn_op_min, btn_op_max;
 	Button btn_highlight, btn_showpos; Static text_winpos;
 	Button btn_swp, btn_resize;
-	CheckBox cb_topmost; Button btn_zorder, btn_border, btn_corner;
+	CheckBox cb_topmost; Button btn_zorder, btn_border, btn_corner, btn_winstyle;
 	void startFind(EventData& ev);
 	void duringFind(EventData& ev);
 	void endFind(EventData& ev);

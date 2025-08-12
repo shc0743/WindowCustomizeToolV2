@@ -359,6 +359,7 @@ void MainWindow::init_controls() {
 	btn_zorder = Button(hwnd, L"Z-order", 1, 1); btn_zorder.create();
 	btn_border = Button(hwnd, L"Border...", 1, 1); btn_border.create();
 	btn_corner = Button(hwnd, L"Corner...", 1, 1); btn_corner.create();
+	btn_winstyle = Button(hwnd, L"Style...", 1, 1, 0, 0, 0, Button::STYLE | BS_SPLITBUTTON); btn_winstyle.create();
 
 	cb_topmost.onChanged([this](EventData&) {
 		if (!target) { cb_topmost.uncheck(); return; }
@@ -376,6 +377,18 @@ void MainWindow::init_controls() {
 	btn_corner.onClick([this](EventData&) {
 		context_anyorder_internal(3, btn_corner);
 	});
+	btn_winstyle.onClick([this](EventData&) {
+		context_anyorder_internal(4, btn_winstyle);
+	});
+	btn_winstyle.on(BCN_DROPDOWN, [this](EventData&) {
+		Menu m({ MenuItem(L"Style", 1), MenuItem(L"StyleEx", 2) });
+		RECT rc{}; GetWindowRect(btn_winstyle, &rc);
+		int ret = m.pop(rc.left, rc.bottom);
+		if (!ret) return;
+		context_anyorder_internal(ret + 3, btn_winstyle);
+		// 1 + 3 == 4
+		// 2 + 3 == 5
+	});
 }
 
 void MainWindow::init_config() {
@@ -387,7 +400,7 @@ void MainWindow::init_config() {
 	autoRefresh = app::config.get_or("app.main_window.target.auto_refresh.enabled", true);
 
 	if (auto corner = (DWM_WINDOW_CORNER_PREFERENCE)app::config.get_or("app.main_window.visual.corner", 0)) {
-        DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, &corner, sizeof(corner));
+		DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, &corner, sizeof(corner));
 	}
 }
 
@@ -447,6 +460,7 @@ void MainWindow::doLayout(EventData& ev) {
 	btn_zorder.resize(150, 205, 80, 25);
 	btn_border.resize(240, 205, 80, 25);
 	btn_corner.resize(330, 205, 80, 25);
+	btn_winstyle.resize(420, 205, 80, 25);
 
 	// 调整状态栏大小
 	sbr.post((UINT)ev.message, ev.wParam, ev.lParam);
@@ -785,10 +799,11 @@ LRESULT MainWindow::SwpDlgHandler(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 }
 
 void MainWindow::context_anyorder_internal(int type, Window& btn_element) {
-	if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
+	if (!IsWindow(this->target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
 	// 1 - Zorder
 	// 2 - Border
 	// 3 - Corner
+	// 4 - Style
 	Menu menu; HWND target = this->target;
 	auto zset = [target](HWND insertAfter) {
 		SetWindowPos(target, insertAfter, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -804,7 +819,7 @@ void MainWindow::context_anyorder_internal(int type, Window& btn_element) {
 		LONG_PTR style = GetWindowLongPtrW(target, GWL_STYLE);
 		if (borderful) style |= Frame;
 		else style &= ~(Frame);
-        SetWindowLongPtrW(target, GWL_STYLE, style);
+		SetWindowLongPtrW(target, GWL_STYLE, style);
 		SetWindowPos(target, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 	};
 	if (type == 2) menu = Menu({
@@ -820,6 +835,107 @@ void MainWindow::context_anyorder_internal(int type, Window& btn_element) {
 		MenuItem(L"Round", 3, std::bind(cornerset, DWMWCP_ROUND)),
 		MenuItem(L"Round small", 4, std::bind(cornerset, DWMWCP_ROUNDSMALL)),
 	});
+	if (type == 4 || type == 5) {
+		// Style adjustor
+		RECT rc{}; GetWindowRect(btn_element, &rc);
+		while (1) {
+			int index = (type == 4) ? GWL_STYLE : GWL_EXSTYLE;
+			LONG_PTR style = GetWindowLongPtrW(target, index);
+			auto check_style = [&style](LONG flag) {
+				return (style & flag) == flag;
+			};
+			auto styletoggle = [&style](LONG flag) {
+				if ((style & flag) == flag) {
+					style &= ~flag;
+				}
+				else {
+					style |= flag;
+				}
+			};
+			if (type == 4) {
+				auto basic_style_set = [&style](LONG flag) {
+					style &= ~(WS_POPUP | WS_CHILD);
+					style |= flag;
+				};
+				menu = Menu({
+					MenuItem(L"WS_OVERLAPPED", 2, std::bind(basic_style_set, WS_OVERLAPPED)),
+					MenuItem(L"WS_POPUP", 3, std::bind(basic_style_set, WS_POPUP)),
+					MenuItem(L"WS_CHILD", 4, std::bind(basic_style_set, WS_CHILD)),
+					MenuItem::separator(),
+					MenuItem(L"WS_BORDER", 5, std::bind(styletoggle, WS_BORDER)),
+					MenuItem(L"WS_CAPTION", 6, std::bind(styletoggle, WS_CAPTION)),
+					MenuItem(L"WS_DLGFRAME", 7, std::bind(styletoggle, WS_DLGFRAME)),
+					MenuItem(L"WS_THICKFRAME (WS_SIZEBOX)", 8, std::bind(styletoggle, WS_THICKFRAME)),
+					MenuItem::separator(),
+					MenuItem(L"WS_SYSMENU", 9, std::bind(styletoggle, WS_SYSMENU)),
+					MenuItem(L"WS_MINIMIZEBOX", 10, std::bind(styletoggle, WS_MINIMIZEBOX)),
+					MenuItem(L"WS_MAXIMIZEBOX", 11, std::bind(styletoggle, WS_MAXIMIZEBOX)),
+					MenuItem::separator(),
+					MenuItem(L"WS_HSCROLL", 12, std::bind(styletoggle, WS_HSCROLL)),
+					MenuItem(L"WS_VSCROLL", 13, std::bind(styletoggle, WS_VSCROLL)),
+					MenuItem(L"WS_CLIPCHILDREN", 14, std::bind(styletoggle, WS_CLIPCHILDREN)),
+					MenuItem(L"WS_CLIPSIBLINGS", 15, std::bind(styletoggle, WS_CLIPSIBLINGS)),
+					MenuItem(L"WS_GROUP", 16, std::bind(styletoggle, WS_GROUP)),
+					MenuItem(L"WS_TABSTOP", 17, std::bind(styletoggle, WS_TABSTOP)),
+					MenuItem::separator(),
+					MenuItem(L"完成更改 (&0)", 1),
+				});
+				if (check_style(WS_POPUP)) menu.get_children()[1].check();
+				else if (check_style(WS_CHILD)) menu.get_children()[2].check();
+				else menu.get_children()[0].check(); // Overlapped
+				menu.get_children()[4].check(check_style(WS_BORDER));
+				menu.get_children()[5].check(check_style(WS_CAPTION));
+				menu.get_children()[6].check(check_style(WS_DLGFRAME));
+				menu.get_children()[7].check(check_style(WS_THICKFRAME));
+				menu.get_children()[9].check(check_style(WS_SYSMENU));
+				menu.get_children()[10].check(check_style(WS_MINIMIZEBOX));
+				menu.get_children()[11].check(check_style(WS_MAXIMIZEBOX));
+			}
+			else if (type == 5) {
+				auto basic_style_set = [&style](LONG flag) {
+					style &= ~(WS_EX_APPWINDOW | WS_EX_TOOLWINDOW);
+					style |= flag;
+				};
+				menu = Menu({
+					MenuItem(L"WS_EX_APPWINDOW", 2, std::bind(basic_style_set, WS_EX_APPWINDOW)),
+					MenuItem(L"WS_EX_TOOLWINDOW", 3, std::bind(basic_style_set, WS_EX_TOOLWINDOW)),
+					MenuItem::separator(),
+					MenuItem(L"WS_EX_DLGMODALFRAME", 4, std::bind(styletoggle, WS_EX_DLGMODALFRAME)),
+					MenuItem(L"WS_EX_NOACTIVATE", 5, std::bind(styletoggle, WS_EX_NOACTIVATE)),
+					MenuItem(L"WS_EX_TOPMOST", 6, std::bind(styletoggle, WS_EX_TOPMOST)),
+					MenuItem(L"WS_EX_ACCEPTFILES", 7, std::bind(styletoggle, WS_EX_ACCEPTFILES)),
+					MenuItem(L"WS_EX_MDICHILD", 8, std::bind(styletoggle, WS_EX_MDICHILD)),
+					MenuItem(L"WS_EX_WINDOWEDGE", 9, std::bind(styletoggle, WS_EX_WINDOWEDGE)),
+					MenuItem(L"WS_EX_CLIENTEDGE", 10, std::bind(styletoggle, WS_EX_CLIENTEDGE)),
+					MenuItem(L"WS_EX_STATICEDGE", 11, std::bind(styletoggle, WS_EX_STATICEDGE)),
+					MenuItem(L"WS_EX_CONTROLPARENT", 12, std::bind(styletoggle, WS_EX_CONTROLPARENT)),
+					MenuItem::separator(),
+					MenuItem(L"WS_EX_LAYERED", 13, std::bind(styletoggle, WS_EX_LAYERED)),
+					MenuItem(L"WS_EX_TRANSPARENT", 14, std::bind(styletoggle, WS_EX_TRANSPARENT)),
+					MenuItem::separator(),
+					MenuItem(L"完成更改 (&0)", 1),
+				});
+				if (check_style(WS_EX_TOOLWINDOW)) menu.get_children()[1].check();
+				else menu.get_children()[0].check();
+				menu.get_children()[3].check(check_style(WS_EX_DLGMODALFRAME));
+				menu.get_children()[4].check(check_style(WS_EX_NOACTIVATE));
+				menu.get_children()[5].check(check_style(WS_EX_TOPMOST));
+				menu.get_children()[6].check(check_style(WS_EX_ACCEPTFILES));
+				menu.get_children()[7].check(check_style(WS_EX_MDICHILD));
+				menu.get_children()[8].check(check_style(WS_EX_WINDOWEDGE));
+				menu.get_children()[9].check(check_style(WS_EX_CLIENTEDGE));
+				menu.get_children()[10].check(check_style(WS_EX_STATICEDGE));
+				menu.get_children()[11].check(check_style(WS_EX_CONTROLPARENT));
+				menu.get_children()[13].check(check_style(WS_EX_LAYERED));
+				menu.get_children()[14].check(check_style(WS_EX_TRANSPARENT));
+			}
+			int i = menu.pop(rc.left, rc.bottom);
+			if (i == 1 || i == 0) break;
+			SetWindowLongPtrW(target, index, style);
+			SetWindowPos(target, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+		}
+		return;
+	}
 	RECT rc{}; GetWindowRect(btn_element, &rc);
 	menu.pop(rc.left, rc.bottom);
 }
