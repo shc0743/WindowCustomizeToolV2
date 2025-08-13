@@ -42,7 +42,6 @@ protected:
 	StatusBar sbr;
 	Static text_targetHwnd, text_clsName;
 	Edit edit_targetHwnd, edit_clsName;
-	Static finder;
 	Static text_winTitle; Edit edit_winTitle; Button btn_applyTitle;
 	Static text_parentWin; Edit edit_parentWin; Button btn_selectParent;
 	Button group_winOperations;
@@ -52,21 +51,16 @@ protected:
 	Button btn_swp, btn_resize;
 	CheckBox cb_topmost; Button btn_zorder, btn_border, btn_corner, btn_winstyle, btn_adjust;
 	Button btn_close, btn_destroy, btn_endtask, btn_properties;
-	void startFind(EventData& ev);
-	void duringFind(EventData& ev);
-	void endFind(EventData& ev);
 	void update_target();
 	void context_anyorder_internal(int type, Window& btn_element);
 	void wop_report_result(bool ok = (GetLastError() == 0), DWORD code = GetLastError());
 	// 查找器
-	WCTv2::winlib::WindowLocator locator;
+	WCTv2::winlib::WindowLocatorControl finder;
 	
 protected:
 	// 成员变量
 	std::wstring success_text;
-	HCURSOR hCurFinding = 0;
-	HICON hFinderEmpty = 0, hFinderFilled = 0;
-	HWND target = NULL;
+	HWND target = NULL, target_old = NULL;
 	bool isFinding = false;
 
 	// 事件处理程序
@@ -111,11 +105,6 @@ protected:
 		WINDOW_add_handler(WM_PAINT, paint);
 		WINDOW_add_handler(WM_SIZING, doLayout);
 		WINDOW_add_handler(WM_SIZE, doLayout);
-		WINDOW_add_handler(WM_LBUTTONDOWN, startFind);
-		WINDOW_add_handler(WM_RBUTTONDOWN, startFind);
-		WINDOW_add_handler(WM_LBUTTONUP, endFind);
-		WINDOW_add_handler(WM_RBUTTONUP, endFind);
-		WINDOW_add_handler(WM_MOUSEMOVE, duringFind);
 		WINDOW_add_handler(WM_MENU_CHECKED, onMenu);
 		WINDOW_add_handler(WM_SYSCOMMAND, onSysMenu);
 		WINDOW_add_handler(WM_TIMER, onTimer);

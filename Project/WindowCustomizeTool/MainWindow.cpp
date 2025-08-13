@@ -4,6 +4,7 @@
 #include "resource.h"
 #include "winlib.hpp"
 #include "WindowAlphaEditor.h"
+#include "WindowChangeParent.h"
 #include <chrono>
 using namespace std;
 HICON MainWindow::app_icon;
@@ -97,9 +98,6 @@ void MainWindow::onCreated() {
 
 void MainWindow::onDestroy() {
 	// 资源清理
-	DeleteObject(hFinderEmpty);
-	DeleteObject(hFinderFilled);
-	DeleteObject(hCurFinding);
 	KillTimer(hwnd, 3);
 	KillTimer(hwnd, 4);
 
@@ -185,16 +183,36 @@ void MainWindow::init_controls() {
 	edit_targetHwnd.create();
 	edit_targetHwnd.readonly(true);
 
-	finder = Static(hwnd, L"", 32, 32);
+	finder.set_parent(*this);
 	finder.create();
-	
-	hFinderEmpty = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_ICON_SELECTOR));
-	hFinderFilled = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_ICON_SELECTOR_FILLED));
-	hCurFinding = LoadCursorW(hInst, MAKEINTRESOURCEW(IDC_CURSOR_WINSELECT));
-	if (!hFinderEmpty || !hFinderFilled || !hCurFinding)
-		throw std::runtime_error("Failed to load resource");
-	finder.add_style(SS_ICON | SS_CENTERIMAGE);
-	finder.send(STM_SETIMAGE, IMAGE_ICON, (LPARAM)hFinderFilled);
+	finder.onselectstart([this] {
+		finder.findMode = findMode;
+		if (putBottomWhenUse) {
+			SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 1, 1, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+		}
+		target_old = target;
+	});
+	finder.onselecting([this](HWND h) {
+		this->target = h;
+		update_target();
+		sbr.set_text(0, L"当前目标窗口: " + hwnd_strify(h));
+	});
+	finder.onselectend([this](HWND h) {
+		// 恢复Z序
+		if (putBottomWhenUse)
+			SetWindowPos(hwnd, isTopMost ? HWND_TOPMOST : HWND_TOP, 0, 0, 1, 1, SWP_NOMOVE | SWP_NOSIZE);
+		// 获取窗口
+		sbr.set_text(0, L"Ready");
+		InvalidateRect(hwnd, NULL, TRUE);
+		UpdateWindow(hwnd);
+		if (this->hwnd == h) {
+			target = target_old;
+		}
+		else {
+			target = target_old = h;
+		}
+		update_target();
+	});
 
 	text_clsName = Static(hwnd, L"| Class name:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
 	text_clsName.create();
@@ -293,14 +311,14 @@ void MainWindow::init_controls() {
 
 	btn_highlight.onClick([this](EventData&) {
 		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
-		thread([](HWND t, WindowLocator locator) {
+		thread([](HWND t, WindowLocatorCore locator) {
 			for (int i = 0; i < 5; ++i) {
 				HighlightWindow(t, locator.get_highlight_color(), locator.get_highlight_width());
 				Sleep(50);
 				RestoreScreenContent();
 				Sleep(50);
 			}
-		}, target, locator).detach();
+		}, target, finder.get_locator()).detach();
 		wop_report_result(true);
 	});
 	btn_showpos.onClick([this](EventData&) {
@@ -506,72 +524,6 @@ void MainWindow::doLayout(EventData& ev) {
 void MainWindow::paint(EventData& ev) {
 	
 }
-
-#pragma region 窗口查找相关
-void MainWindow::startFind(EventData& ev) {
-	POINT pt; GetCursorPos(&pt);
-	RECT rect; GetWindowRect(finder, &rect);
-		// 判断鼠标是否在 finder 范围内
-	if (!(
-		pt.x > rect.left &&
-		pt.x < rect.right &&
-		pt.y> rect.top &&
-		pt.y < rect.bottom
-	)) return;
-	ev.preventDefault();
-
-	// 开始查找
-	isFinding = true;
-	// 设置鼠标
-	SetCapture(hwnd);
-	SetCursor(hCurFinding);
-	// 改变图标
-	hFinderFilled = (HICON)finder.send(STM_SETIMAGE, IMAGE_ICON, (LPARAM)hFinderEmpty);
-	// 窗口置底
-	if (putBottomWhenUse)
-		SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 1, 1, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-
-	locator.start();
-	locator.mode = findMode;
-	locator.setCallback([this](HWND target) {
-		if (this->hwnd == target) return;
-		this->target = target;
-		update_target();
-		sbr.set_text(0, L"当前目标窗口: " + hwnd_strify(target));
-	});
-
-	sbr.set_text(0, L"正在查找窗口...");
-}
-void MainWindow::duringFind(EventData& ev) {
-	if (!isFinding) return;
-	ev.preventDefault();
-
-	locator.during();
-}
-void MainWindow::endFind(EventData& ev) {
-	if (!isFinding) return;
-	ev.preventDefault();
-	locator.end();
-
-	// 恢复状态
-	isFinding = false;
-	ReleaseCapture(); //释放鼠标捕获
-	RedrawWindow(GetDesktopWindow(), NULL, NULL, RDW_UPDATENOW | RDW_ALLCHILDREN);
-	UpdateWindow(GetDesktopWindow());
-	// 恢复图标
-	hFinderEmpty = (HICON)finder.send(STM_SETIMAGE, IMAGE_ICON, (LPARAM)hFinderFilled);
-	// 恢复Z序
-	if (putBottomWhenUse)
-		SetWindowPos(hwnd, isTopMost ? HWND_TOPMOST : HWND_TOP, 0, 0, 1, 1, SWP_NOMOVE | SWP_NOSIZE);
-	// 获取窗口
-	sbr.set_text(0, L"Ready");
-	InvalidateRect(hwnd, NULL, TRUE);
-	UpdateWindow(hwnd);
-	if (this->hwnd == locator.target()) return;
-	target = locator.target();
-	update_target();
-}
-#pragma endregion
 
 void MainWindow::update_target() {
 	// 意图：更新目标窗口的相关信息。
@@ -858,7 +810,6 @@ void MainWindow::onMenu(EventData& ev) {
 	{
 		DWORD pid = 0; GetWindowThreadProcessId(target, &pid);
 		wop_report_result(siapi::DestroyRemoteWindow(target, pid));
-		PostMessageW(target, WM_APP + 99999, 0, 0); // 发送一个无作用消息，以使得目标进程 alertable 并销毁窗口。
 	}
 		break;
 	case ID_MENU_WINDOWMANAGER_ENDTASK:
@@ -1125,6 +1076,16 @@ void MainWindow::context_anyorder_internal(int type, Window& btn_element) {
 	}
 	if (type == 6) menu = Menu({
 		MenuItem(L"调整透明度 (&A)", 1, [this] { thread(createAlphaEditor, this->target).detach(); }),
+		MenuItem(L"调整父窗口 (&P)", 2, [this] {
+			thread([](HWND target, HWND centerSource) {
+				WindowChangeParent wcp;
+				wcp.create();
+				wcp.setTarget(target);
+				wcp.center(centerSource);
+				wcp.show();
+				wcp.run(&wcp);
+			}, this->target, hwnd).detach();
+		}),
 	});
 	RECT rc{}; GetWindowRect(btn_element, &rc);
 	menu.pop(rc.left, rc.bottom);

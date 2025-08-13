@@ -75,6 +75,9 @@
     <ClCompile Include="..\lib\DestroyRemoteWindow.cpp">
       <Filter>lib</Filter>
     </ClCompile>
+    <ClCompile Include="WindowChangeParent.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\w32oop\Core\publicdef.hpp">
@@ -175,6 +178,9 @@
     </ClInclude>
     <ClInclude Include="..\lib\DestroyRemoteWindow.h">
       <Filter>lib</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowChangeParent.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

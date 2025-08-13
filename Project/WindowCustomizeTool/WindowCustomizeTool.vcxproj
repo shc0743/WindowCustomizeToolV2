@@ -150,6 +150,7 @@
     <ClCompile Include="OverlayWindow.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />
     <ClCompile Include="WindowAlphaEditor.cpp" />
+    <ClCompile Include="WindowChangeParent.cpp" />
     <ClCompile Include="WindowLocator.cpp" />
     <ClCompile Include="winlib.cpp" />
   </ItemGroup>
@@ -185,6 +186,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="SettingsDialog.h" />
     <ClInclude Include="WindowAlphaEditor.h" />
+    <ClInclude Include="WindowChangeParent.h" />
     <ClInclude Include="WindowLocator.h" />
     <ClInclude Include="winlib.hpp" />
   </ItemGroup>
