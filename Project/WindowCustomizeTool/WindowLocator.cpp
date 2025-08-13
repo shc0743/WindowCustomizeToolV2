@@ -61,9 +61,9 @@ void WindowLocatorControl::onCreated() {
 }
 
 void WindowLocatorControl::onDestroy() {
-	DeleteObject(hFinderEmpty);
-	DeleteObject(hFinderFilled);
-	DeleteObject(hCurFinding);
+	DestroyIcon(hFinderEmpty);
+	DestroyIcon(hFinderFilled);
+	DestroyCursor(hCurFinding);
 }
 
 void WindowLocatorControl::startFind(EventData& ev) {

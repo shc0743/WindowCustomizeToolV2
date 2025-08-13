@@ -133,7 +133,7 @@ void MainWindow::onTimer(EventData& ev) {
 				HWND focus = GetFocus();
 				if (focus) {
 					WCHAR cls[256]{}; GetClassNameW(focus, cls, 256);
-					if (cls == L"Edit"s) {
+					if (_wcsicmp(cls, L"Edit") == 0) {
 						// 用户正在输入，不更新
 						break;
 					}
@@ -476,6 +476,7 @@ void MainWindow::updateMenuStatus() {
 void MainWindow::doLayout(EventData& ev) {
 	// 处理 WM_SIZE / WM_SIZING
 	ev.preventDefault();
+	ev.returnValue(TRUE);
 
 	RECT rc = { 0 }; GetClientRect(hwnd, &rc);
 	LONG w = rc.right - rc.left, h = rc.bottom - rc.top;

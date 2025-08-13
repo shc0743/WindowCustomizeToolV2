@@ -86,6 +86,7 @@ void OverlayWindow::initSize() {
 
 void OverlayWindow::doLayout(EventData& ev) {
 	if (!isUserSize) return;
+	ev.returnValue(TRUE);
 	if (type == TYPE_PASSIVE) {
 		if (!target) return;
 		ev.preventDefault();
