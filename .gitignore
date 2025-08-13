@@ -33,6 +33,9 @@
 *.out
 *.app
 
+# phlib (Ignore because it is too large (~74MiB))
+phlib.lib
+
 # Other
 copilot-chat
 CopilotIndices

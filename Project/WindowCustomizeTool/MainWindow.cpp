@@ -1,13 +1,18 @@
-﻿#include "MainWindow.h"
+﻿#include "../lib/DestroyRemoteWindow.h"
+#include "MainWindow.h"
 #include "IPCWindow.h"
 #include "resource.h"
 #include "winlib.hpp"
+#include "WindowAlphaEditor.h"
 #include <chrono>
 using namespace std;
 HICON MainWindow::app_icon;
 
 using namespace WindowCustomizeToolV2_app;
 using namespace WCTv2::winlib;
+
+
+#pragma comment(lib, "winmm.lib")
 
 
 wstring MainWindow::current_time() {
@@ -39,7 +44,8 @@ std::wstring MainWindow::hwnd_strify(HWND hWnd) const {
 
 
 void MainWindow::onCreated() {
-	SetLayeredWindowAttributes(hwnd, 0, (BYTE)0xee, LWA_ALPHA);
+	add_style_ex(WS_EX_LAYERED);
+	SetLayeredWindowAttributes(hwnd, 0, (BYTE)app::config.get_or("app.main_window.visual.alpha", 0xee), LWA_ALPHA);
 	sbr.set_parent(this);
 	sbr.create(L"", 1, 1);
 
@@ -60,16 +66,13 @@ void MainWindow::onCreated() {
 		toggleTopMostState();
 	}, HotKeyOptions::Windowed);
 	register_hot_key(true, false, false, 'R', [this](HotKeyProcData& data) {
-		data.preventDefault();
-		dispatchEvent(EventData(hwnd, WM_MENU_CHECKED, ID_MENU_WINDOWMANAGER_RELOAD, 0));
+		data.preventDefault(); postMenuEvent(ID_MENU_WINDOWMANAGER_RELOAD);
 	}, HotKeyOptions::Windowed);
 	register_hot_key(false, false, false, VK_F5, [this](HotKeyProcData& data) {
-		data.preventDefault();
-		dispatchEvent(EventData(hwnd, WM_MENU_CHECKED, ID_MENU_WINDOWMANAGER_RELOAD, 0));
+		data.preventDefault(); postMenuEvent(ID_MENU_WINDOWMANAGER_RELOAD);
 	}, HotKeyOptions::Windowed);
 	register_hot_key(true, false, false, 'F', [this](HotKeyProcData& data) {
-		data.preventDefault();
-		dispatchEvent(EventData(hwnd, WM_MENU_CHECKED, ID_MENU_WINDOW_FIND, 0));
+		data.preventDefault(); postMenuEvent(ID_MENU_WINDOW_FIND);
 	}, HotKeyOptions::Windowed);
 
 	init_controls();
@@ -133,6 +136,8 @@ void MainWindow::onDestroy() {
 	app::config["app.main_window.userwindow.y"] = rc.top;
 	app::config["app.main_window.userwindow.width"] = rc.right - rc.left;
 	app::config["app.main_window.userwindow.height"] = rc.bottom - rc.top;
+	// 保存透明度
+	app::config["app.main_window.visual.alpha"] = last_alpha;
 
 	if (app::no_main_window) return;
 	// 如果所有 MainWindow 都关闭了，则退出应用程序
@@ -150,7 +155,19 @@ void MainWindow::onTimer(EventData& ev) {
 		sbr.set_text(1, current_time());
 		break;
 	case 4:
-		if (autoRefresh) update_target();
+		if (autoRefresh) {
+			if (GetForegroundWindow() == hwnd) {
+				HWND focus = GetFocus();
+				if (focus) {
+					WCHAR cls[256]{}; GetClassNameW(focus, cls, 256);
+					if (cls == L"Edit"s) {
+						// 用户正在输入，不更新
+						break;
+					}
+				}
+			}
+			update_target();
+		}
 		break;
 	default:
 		return;
@@ -165,7 +182,8 @@ void MainWindow::onClose(EventData& ev) {
 		hideMainWindow();
 		return;
 	}
-	remove_style_ex(WS_EX_LAYERED); // 要使得窗口有正常的关闭动画，窗口不能是Layered窗口
+	ev.preventDefault();
+	send(WM_APP + WM_CLOSE);
 }
 
 void MainWindow::hideMainWindow() {
@@ -185,7 +203,7 @@ void MainWindow::hideMainWindow() {
 }
 
 void MainWindow::init_controls() {
-	text_targetHwnd = Static(hwnd, L"Target &HWND:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
+	text_targetHwnd = Static(hwnd, L"Target HWND:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
 	text_targetHwnd.create();
 
 	edit_targetHwnd = Edit(hwnd, L"0", 120, 10);
@@ -203,15 +221,15 @@ void MainWindow::init_controls() {
 	finder.add_style(SS_ICON | SS_CENTERIMAGE);
 	finder.send(STM_SETIMAGE, IMAGE_ICON, (LPARAM)hFinderFilled);
 
-	text_clsName = Static(hwnd, L"| &Class name:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
+	text_clsName = Static(hwnd, L"| Class name:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
 	text_clsName.create();
 	edit_clsName = Edit(hwnd, L"", 1, 1);
 	edit_clsName.create();
 	edit_clsName.readonly(true);
 
-	text_winTitle = Static(hwnd, L"Window &Title:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
+	text_winTitle = Static(hwnd, L"Window Title:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
 	edit_winTitle = Edit(hwnd, L"", 1, 1);
-	btn_applyTitle = Button(hwnd, L"&Apply", 1, 1);
+	btn_applyTitle = Button(hwnd, L"Apply", 1, 1);
 	text_winTitle.create();
 	edit_winTitle.create();
 	btn_applyTitle.create();
@@ -228,9 +246,9 @@ void MainWindow::init_controls() {
 		else MessageBoxW(hwnd, L"No window selected", L"Error", MB_OK | MB_ICONERROR);
 	});
 
-	text_parentWin = Static(hwnd, L"&Parent Window:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
+	text_parentWin = Static(hwnd, L"Parent Window:", 1, 1, 0, 0, Static::STYLE | SS_CENTERIMAGE);
 	edit_parentWin = Edit(hwnd, L"", 1, 1);
-	btn_selectParent = Button(hwnd, L"&Switch To", 1, 1);
+	btn_selectParent = Button(hwnd, L"Switch To", 1, 1);
 	text_parentWin.create();
 	edit_parentWin.create();
 	btn_selectParent.create();
@@ -255,12 +273,12 @@ void MainWindow::init_controls() {
 	group_winOperations.create();
 	group_winOperations.remove_style(WS_TABSTOP);
 
-	cb_showWin = CheckBox(hwnd, L"&Show", 1, 1);
-	cb_enableWin = CheckBox(hwnd, L"&Enabled", 1, 1);
-	btn_b2f = Button(hwnd, L"&Bring to Front", 1, 1);
-	btn_op_shownormal = Button(hwnd, L"&Restore", 1, 1);
-	btn_op_max = Button(hwnd, L"&Maximize", 1, 1);
-	btn_op_min = Button(hwnd, L"&Minimize", 1, 1);
+	cb_showWin = CheckBox(hwnd, L"Show", 1, 1);
+	cb_enableWin = CheckBox(hwnd, L"Enabled", 1, 1);
+	btn_b2f = Button(hwnd, L"Bring to Front", 1, 1);
+	btn_op_shownormal = Button(hwnd, L"Restore", 1, 1);
+	btn_op_max = Button(hwnd, L"Maximize", 1, 1);
+	btn_op_min = Button(hwnd, L"Minimize", 1, 1);
 	cb_showWin.create(); cb_enableWin.create(); btn_b2f.create();
 	btn_op_shownormal.create(); btn_op_min.create(); btn_op_max.create();
 	cb_showWin.onChanged([this] (EventData& ev) {
@@ -278,22 +296,16 @@ void MainWindow::init_controls() {
 		wop_report_result();
 	});
 	btn_b2f.onClick([this] (EventData& ev) {
-		wop_report_result(BringWindowToTop(target));
+		postMenuEvent(ID_MENU_WINDOWMANAGER_BTF);
 	});
 	btn_op_shownormal.onClick([this] (EventData& ev) {
-		SetLastError(0);
-		ShowWindow(target, SW_RESTORE);
-		wop_report_result();
+		postMenuEvent(ID_MENU_WINDOWMANAGER_SHOW);
 	});
 	btn_op_min.onClick([this] (EventData& ev) {
-		SetLastError(0);
-		ShowWindow(target, SW_MINIMIZE);
-		wop_report_result();
+		postMenuEvent(ID_MENU_WINDOWMANAGER_MINIMIZE);
 	});
 	btn_op_max.onClick([this] (EventData& ev) {
-		SetLastError(0);
-		ShowWindow(target, SW_MAXIMIZE);
-		wop_report_result();
+		postMenuEvent(ID_MENU_WINDOWMANAGER_MAXIMIZE);
 	});
 
 	btn_highlight = Button(hwnd, L"Highlight", 1, 1);
@@ -306,53 +318,24 @@ void MainWindow::init_controls() {
 
 	btn_highlight.onClick([this](EventData&) {
 		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
-		thread th([](HWND t, WindowLocator locator) {
+		thread([](HWND t, WindowLocator locator) {
 			for (int i = 0; i < 5; ++i) {
 				HighlightWindow(t, locator.get_highlight_color(), locator.get_highlight_width());
 				Sleep(50);
 				RestoreScreenContent();
 				Sleep(50);
 			}
-		}, target, locator);
-		th.detach();
-
+		}, target, locator).detach();
 		wop_report_result(true);
 	});
 	btn_showpos.onClick([this](EventData&) {
-		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
-		thread th([](HWND t) {
-			OverlayWindow overlay;
-			overlay.create();
-			overlay.setTarget(t);
-			overlay.show();
-			overlay.setClosable(false);
-			overlay.closeAfter(2000);
-			overlay.run();
-		}, target);
-		th.detach();
-		wop_report_result(true);
+		postMenuEvent(ID_MENU_WINDOWMANAGER_HIGHLIGHT);
 	});
 	btn_resize.onClick([this](EventData&) {
-		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
-		disable();
-		thread th([](HWND target, HWND self) {
-			OverlayWindow overlay;
-			overlay.create();
-			overlay.setType(OverlayWindow::TYPE_PROACTIVE);
-			overlay.setTarget(target);
-			overlay.show();
-			overlay.run(&overlay);
-			if (IsWindow(self)) {
-				EnableWindow(self, TRUE);
-				SetForegroundWindow(self);
-			}
-		}, target, hwnd);
-		th.detach();
-		wop_report_result(true);
+		postMenuEvent(ID_MENU_WINDOWMANAGER_RESIZE);
 	});
 	btn_swp.onClick([this](EventData&) {
-		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
-		DialogBoxParamW(hInst, MAKEINTRESOURCEW(IDD_DIALOG_SWP_ARGS), hwnd, SwpDlgHandler, (LPARAM)target);
+		postMenuEvent(ID_MENU_WINDOWMANAGER_SWP);
 	});
 
 	cb_topmost = CheckBox(hwnd, L"Always on top", 1, 1); cb_topmost.create();
@@ -360,6 +343,7 @@ void MainWindow::init_controls() {
 	btn_border = Button(hwnd, L"Border...", 1, 1); btn_border.create();
 	btn_corner = Button(hwnd, L"Corner...", 1, 1); btn_corner.create();
 	btn_winstyle = Button(hwnd, L"Style...", 1, 1, 0, 0, 0, Button::STYLE | BS_SPLITBUTTON); btn_winstyle.create();
+	btn_adjust = Button(hwnd, L"Adjust...", 1, 1); btn_adjust.create();
 
 	cb_topmost.onChanged([this](EventData&) {
 		if (!target) { cb_topmost.uncheck(); return; }
@@ -381,14 +365,25 @@ void MainWindow::init_controls() {
 		context_anyorder_internal(4, btn_winstyle);
 	});
 	btn_winstyle.on(BCN_DROPDOWN, [this](EventData&) {
-		Menu m({ MenuItem(L"Style", 1), MenuItem(L"StyleEx", 2) });
 		RECT rc{}; GetWindowRect(btn_winstyle, &rc);
-		int ret = m.pop(rc.left, rc.bottom);
+		int ret = Menu({
+			MenuItem(L"Style", 1),
+			MenuItem(L"StyleEx", 2)
+		}).pop(rc.left, rc.bottom);
 		if (!ret) return;
-		context_anyorder_internal(ret + 3, btn_winstyle);
 		// 1 + 3 == 4
 		// 2 + 3 == 5
+		context_anyorder_internal(ret + 3, btn_winstyle);
 	});
+	btn_adjust.onClick([this](EventData&) {
+		context_anyorder_internal(6, btn_adjust);
+	});
+
+	btn_close = Button(hwnd, L"Close", 1, 1); btn_close.create();
+	btn_destroy = Button(hwnd, L"Destroy", 1, 1); btn_destroy.create();
+	btn_endtask = Button(hwnd, L"EndTask", 1, 1); btn_endtask.create();
+	btn_properties = Button(hwnd, L"Properties", 1, 1); btn_properties.create();
+	btn_close.onClick([this](EventData&) {});
 }
 
 void MainWindow::init_config() {
@@ -401,12 +396,15 @@ void MainWindow::init_config() {
 
 	if (auto corner = (DWM_WINDOW_CORNER_PREFERENCE)app::config.get_or("app.main_window.visual.corner", 0)) {
 		DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, &corner, sizeof(corner));
+		corner_config = corner;
 	}
 }
 
 void MainWindow::updateMenuStatus() {
 	HMENU hMainMenu = GetMenu(hwnd);
-	HMENU menu = GetSubMenu(hMainMenu, 2); // “选项”菜单项
+
+	// “选项”菜单项
+	HMENU menu = GetSubMenu(hMainMenu, 2);
 	CheckMenuItem(menu, ID_MENU_OPTIONS_ALWAYSONTOP, isTopMost ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(menu, ID_MENU_OPTIONS_HIDEWHENMINIMID, hideWhenMinimized ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(menu, ID_MENU_OPTIONS_PUT_BUTTOM_WHEN_USE, putBottomWhenUse ? MF_CHECKED : MF_UNCHECKED);
@@ -423,6 +421,21 @@ void MainWindow::updateMenuStatus() {
 		),
 		MF_BYCOMMAND);
 	CheckMenuItem(menu, ID_MENU_OPTIONS_AUTOREFRESH, autoRefresh ? MF_CHECKED : MF_UNCHECKED);
+
+	// “视图”菜单项
+	menu = GetSubMenu(hMainMenu, 3);
+	int idCorner = ID_MENU_VIEW_MAINWINDOW_CORNER_0 + corner_config;
+	if (idCorner < ID_MENU_VIEW_MAINWINDOW_CORNER_0 || idCorner > ID_MENU_VIEW_MAINWINDOW_CORNER_3)
+		idCorner = ID_MENU_VIEW_MAINWINDOW_CORNER_0;
+	CheckMenuRadioItem(menu,
+		ID_MENU_VIEW_MAINWINDOW_CORNER_0,
+		ID_MENU_VIEW_MAINWINDOW_CORNER_3,
+		idCorner,
+		MF_BYCOMMAND);
+
+	// “窗口”菜单项
+	menu = GetSubMenu(hMainMenu, 4);
+	//EnableMenuItem(menu, 4, ((target && IsWindow(target)) ? (MF_ENABLED) : (MF_DISABLED | MF_GRAYED)) | MF_BYPOSITION);
 }
 
 void MainWindow::doLayout(EventData& ev) {
@@ -444,7 +457,7 @@ void MainWindow::doLayout(EventData& ev) {
 	text_parentWin.resize(10, 78, 100, 24);
 	edit_parentWin.resize(120, 78, w - 230, 24);
 	btn_selectParent.resize(w - 100, 78, 90, 24);
-	group_winOperations.resize(10, 110, w - 20, h - 250);
+	group_winOperations.resize(10, 110, w - 20, 170);
 	cb_showWin.resize(20, 135, 60, 25);
 	cb_enableWin.resize(90, 135, 80, 25);
 	btn_b2f.resize(180, 135, w - 470, 25);
@@ -460,7 +473,8 @@ void MainWindow::doLayout(EventData& ev) {
 	btn_zorder.resize(150, 205, 80, 25);
 	btn_border.resize(240, 205, 80, 25);
 	btn_corner.resize(330, 205, 80, 25);
-	btn_winstyle.resize(420, 205, 80, 25);
+	btn_winstyle.resize(420, 205, 100, 25);
+	btn_adjust.resize(530, 205, w - 550, 25);
 
 	// 调整状态栏大小
 	sbr.post((UINT)ev.message, ev.wParam, ev.lParam);
@@ -472,11 +486,11 @@ void MainWindow::paint(EventData& ev) {
 	
 }
 
+#pragma region 窗口查找相关
 void MainWindow::startFind(EventData& ev) {
 	POINT pt; GetCursorPos(&pt);
 	RECT rect; GetWindowRect(finder, &rect);
-
-	// 判断鼠标是否在 finder 范围内
+		// 判断鼠标是否在 finder 范围内
 	if (!(
 		pt.x > rect.left &&
 		pt.x < rect.right &&
@@ -507,14 +521,12 @@ void MainWindow::startFind(EventData& ev) {
 
 	sbr.set_text(0, L"正在查找窗口...");
 }
-
 void MainWindow::duringFind(EventData& ev) {
 	if (!isFinding) return;
 	ev.preventDefault();
 
 	locator.during();
 }
-
 void MainWindow::endFind(EventData& ev) {
 	if (!isFinding) return;
 	ev.preventDefault();
@@ -538,6 +550,7 @@ void MainWindow::endFind(EventData& ev) {
 	target = locator.target();
 	update_target();
 }
+#pragma endregion
 
 void MainWindow::update_target() {
 	// 意图：更新目标窗口的相关信息。
@@ -661,18 +674,41 @@ void MainWindow::onMenu(EventData& ev) {
 			}
 		));
 		break;
-	case ID_MENU_WINDOW_FIND:
-		DialogBox(hInst, MAKEINTRESOURCE(IDD_DIALOG_WINDOWFINDER1), hwnd, (
+	case ID_MENU_WINDOW_FIND: {
+		INT_PTR r = DialogBoxParamW(hInst, MAKEINTRESOURCE(IDD_DIALOG_WINDOWFINDER1), hwnd, (
 			[](HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)->LRESULT {
 				switch (message) {
 				case WM_INITDIALOG:
 					return TRUE;
 				case WM_COMMAND:
 					switch (LOWORD(wParam)) {
-					case IDOK:
-						// 获取窗口……
+					case IDABORT:
+						ShellExecuteW(hDlg, L"open", L"https://learn.microsoft.com/zh-cn/"
+							"windows/win32/api/winuser/nf-winuser-findwindoww",
+							NULL, NULL, SW_SHOW);
+						break;
+					case IDOK: {
+						// 获取窗口…… 
+						HWND hw = 0;
+						WCHAR caption[2048] = { 0 }, classn[256] = { 0 }, handle[32] = { 0 };
+						GetDlgItemTextW(hDlg, IDC_WINDOWFINDER_CAPTION, caption, 2048);
+						GetDlgItemTextW(hDlg, IDC_WINDOWFINDER_CLASS, classn, 256);
+						GetDlgItemTextW(hDlg, IDC_WINDOWFINDER_HANDLE, handle, 32);
+						if (handle[0] != 0) {
+							// 解析用户输入的字符串。如果用户输入以 0x 开头，则尝试解析为十六进制；
+							// 否则尝试解析为十进制。
+							hw = (HWND)(ULONG_PTR)wcstoul(handle, NULL, handle[0] == L'0' && handle[1] == L'x' ? 16 : 10);
+						}
+						if (!IsWindow(hw)) {
+							if (caption[0] || classn[0])
+								hw = FindWindowW(classn[0] ? classn : NULL, caption[0] ? caption : NULL);
+							else hw = NULL;
+						}
+						EndDialog(hDlg, (INT_PTR)hw);
+					}
+						break;
 					case IDCANCEL:
-						EndDialog(hDlg, LOWORD(wParam));
+						EndDialog(hDlg, NULL);
 						break;
 					default:
 						return FALSE;
@@ -682,7 +718,15 @@ void MainWindow::onMenu(EventData& ev) {
 					return FALSE;
 				}
 			}
-			));
+		), 0);
+		if (r) {
+			target = (HWND)(LONG_PTR)r;
+			update_target();
+		}
+		else {
+			sbr.set_text(0, current_time() + L" 未找到符合条件的窗口。");
+		}
+	}
 		break;
 	case ID_MENU_OPTIONS_WLPREF_HELP:
 		TaskDialog(hwnd, NULL, L"帮助", L"窗口查找偏好",
@@ -711,6 +755,111 @@ void MainWindow::onMenu(EventData& ev) {
 		app::config["app.main_window.target.auto_refresh.enabled"] = autoRefresh;
 		updateMenuStatus();
 		break;
+	case ID_MENU_VIEW_MAINWINDOW_ALPHA:
+		thread(createAlphaEditor, hwnd).detach();
+		break;
+	case ID_MENU_VIEW_MAINWINDOW_CORNER_0:
+	case ID_MENU_VIEW_MAINWINDOW_CORNER_1:
+	case ID_MENU_VIEW_MAINWINDOW_CORNER_2:
+	case ID_MENU_VIEW_MAINWINDOW_CORNER_3:
+	{
+		// 偷懒: 菜单ID是连续的，所以可以直接减去起始ID
+		corner_config = (DWM_WINDOW_CORNER_PREFERENCE)(ev.wParam - ID_MENU_VIEW_MAINWINDOW_CORNER_0);
+		app::config["app.main_window.visual.corner"] = corner_config;
+		updateMenuStatus();
+		DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, &corner_config, sizeof(corner_config));
+	}
+		break;
+#pragma region 窗口管理器相关处理
+	case ID_MENU_WINDOWMANAGER_BTF:
+		wop_report_result(BringWindowToTop(target));
+		break;
+	case ID_MENU_WINDOWMANAGER_SHOW:
+	case ID_MENU_WINDOWMANAGER_HIDE:
+	case ID_MENU_WINDOWMANAGER_MINIMIZE:
+	case ID_MENU_WINDOWMANAGER_MAXIMIZE:
+	{
+		const map<WPARAM, int> MyMap = {
+			{ ID_MENU_WINDOWMANAGER_SHOW, SW_RESTORE },
+			{ ID_MENU_WINDOWMANAGER_HIDE, SW_HIDE },
+			{ ID_MENU_WINDOWMANAGER_MINIMIZE, SW_MINIMIZE },
+			{ ID_MENU_WINDOWMANAGER_MAXIMIZE, SW_MAXIMIZE }
+		};
+		SetLastError(0);
+		ShowWindow(target, MyMap.at(ev.wParam));
+		wop_report_result();
+	}
+		break;
+	case ID_MENU_WINDOWMANAGER_HIGHLIGHT:
+		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
+		thread([](HWND t) {
+			OverlayWindow overlay;
+			overlay.create();
+			overlay.setTarget(t);
+			overlay.show();
+			overlay.setClosable(false);
+			overlay.closeAfter(2000);
+			overlay.run(&overlay);
+		}, target).detach();
+		wop_report_result(true);
+		break;
+	case ID_MENU_WINDOWMANAGER_RESIZE:
+		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
+		disable();
+		thread([](HWND target, HWND self) {
+			OverlayWindow overlay;
+			overlay.create();
+			overlay.setType(OverlayWindow::TYPE_PROACTIVE);
+			overlay.setTarget(target);
+			overlay.show();
+			overlay.run(&overlay);
+			if (IsWindow(self)) {
+				EnableWindow(self, TRUE);
+				SetForegroundWindow(self);
+			}
+		}, target, hwnd).detach();
+		wop_report_result(true);
+		break;
+	case ID_MENU_WINDOWMANAGER_SWP:
+		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
+		DialogBoxParamW(hInst, MAKEINTRESOURCEW(IDD_DIALOG_SWP_ARGS), hwnd, SwpDlgHandler, (LPARAM)target);
+		break;
+	case ID_MENU_WINDOWMANAGER_CLOSE:
+		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
+		disable();
+		SendMessageTimeoutW(target, WM_CLOSE, 0, 0, SMTO_ABORTIFHUNG | SMTO_BLOCK, 5000, NULL);
+		enable();
+		wop_report_result(false == IsWindow(target));
+		break;
+	case ID_MENU_WINDOWMANAGER_DESTROY:
+		// 使用 APC 销毁目标窗口。
+		if (!IsWindow(target)) return wop_report_result(false, ERROR_INVALID_WINDOW_HANDLE);
+	{
+		DWORD pid = 0; GetWindowThreadProcessId(target, &pid);
+		wop_report_result(siapi::DestroyRemoteWindow(target, pid));
+		PostMessageW(target, WM_APP + 99999, 0, 0); // 发送一个无作用消息，以使得目标进程 alertable 并销毁窗口。
+	}
+		break;
+	case ID_MENU_WINDOWMANAGER_ENDTASK:
+	{
+		HMODULE user32 = GetModuleHandleW(L"user32.dll");
+		if (!user32) { wop_report_result(false); break; }
+		typedef BOOL(WINAPI* EndTask_t)(HWND hWnd, BOOL fShutDown, BOOL fForce);
+		EndTask_t EndTask = (EndTask_t)GetProcAddress(user32, "EndTask");
+		if (!EndTask) { wop_report_result(false); break; }
+		disable();
+		if (!EndTask(target, FALSE, FALSE)) {
+			wop_report_result(false);
+			thread([] {
+				PlaySoundW((LPCWSTR)SND_ALIAS_SYSTEMHAND, 0, SND_ALIAS_ID);
+			}).detach();
+		}
+		else wop_report_result(false == IsWindow(target));
+		enable();
+	}
+		break;
+#pragma endregion
+
 	default:
 		return;
 	}
@@ -735,6 +884,15 @@ void MainWindow::toggleTopMostState() {
 	updateMenuStatus();
 }
 
+void MainWindow::createAlphaEditor(HWND hWnd) {
+	WindowAlphaEditor wa;
+	wa.create();
+	wa.setTarget(hWnd);
+	wa.center(hWnd);
+	wa.show();
+	wa.run(&wa);
+}
+
 void MainWindow::onMinimize(EventData& ev) {
 	if (ev.wParam != SIZE_MINIMIZED) return;
 	if (!hideWhenMinimized) return;
@@ -752,10 +910,10 @@ LRESULT MainWindow::SwpDlgHandler(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 			RECT rc{}; HWND target = (HWND)lParam;
 			GetWindowRect(target, &rc);
 
-			SetDlgItemInt(hDlg, IDC_EDIT_SWP_X, rc.left, FALSE);
-			SetDlgItemInt(hDlg, IDC_EDIT_SWP_Y, rc.top, FALSE);
-			SetDlgItemInt(hDlg, IDC_EDIT_SWP_cx, rc.right - rc.left, FALSE);
-			SetDlgItemInt(hDlg, IDC_EDIT_SWP_cy, rc.bottom - rc.top, FALSE);
+			SetDlgItemInt(hDlg, IDC_EDIT_SWP_X, rc.left, TRUE);
+			SetDlgItemInt(hDlg, IDC_EDIT_SWP_Y, rc.top, TRUE);
+			SetDlgItemInt(hDlg, IDC_EDIT_SWP_cx, rc.right - rc.left, TRUE);
+			SetDlgItemInt(hDlg, IDC_EDIT_SWP_cy, rc.bottom - rc.top, TRUE);
 			SetDlgItemInt(hDlg, IDC_EDIT_SWP_uFlags, 0, TRUE);
 			SetDlgItemInt(hDlg, IDC_EDIT_SWP_hWndInsertAfter, (INT)LONG_PTR(
 				IsWindowTopMost(target) ? HWND_TOPMOST : 0
@@ -804,6 +962,8 @@ void MainWindow::context_anyorder_internal(int type, Window& btn_element) {
 	// 2 - Border
 	// 3 - Corner
 	// 4 - Style
+	// 5 - StyleEx
+	// 6 - Adjust
 	Menu menu; HWND target = this->target;
 	auto zset = [target](HWND insertAfter) {
 		SetWindowPos(target, insertAfter, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -922,7 +1082,7 @@ void MainWindow::context_anyorder_internal(int type, Window& btn_element) {
 					MenuItem(L"完成更改 (&0)", 1),
 				});
 				if (check_style(WS_EX_TOOLWINDOW)) menu.get_children()[1].check();
-				else menu.get_children()[0].check();
+				else if (check_style(WS_EX_APPWINDOW)) menu.get_children()[0].check();
 				menu.get_children()[3].check(check_style(WS_EX_DLGMODALFRAME));
 				menu.get_children()[4].check(check_style(WS_EX_NOACTIVATE));
 				menu.get_children()[5].check(check_style(WS_EX_TOPMOST));
@@ -942,6 +1102,9 @@ void MainWindow::context_anyorder_internal(int type, Window& btn_element) {
 		}
 		return;
 	}
+	if (type == 6) menu = Menu({
+		MenuItem(L"调整透明度 (&A)", 1, [this] { thread(createAlphaEditor, this->target).detach(); }),
+	});
 	RECT rc{}; GetWindowRect(btn_element, &rc);
 	menu.pop(rc.left, rc.bottom);
 }

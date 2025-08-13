@@ -74,7 +74,7 @@
     <OutDir>..\bin\</OutDir>
     <IntDir>..\out\$(ProjectName).$(Platform)$(Configuration)\</IntDir>
     <TargetName>WindowCustomizeTool_v2</TargetName>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../../../w32oop/</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../../../w32oop/;../lib/phnt/include/;../lib/phlib/include/</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -120,7 +120,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PHLIB_;PHLIB;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -130,21 +130,26 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>../lib/phlib.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\w32oop\GUI\FoundationLib.cpp" />
     <ClCompile Include="..\..\..\w32oop\GUI\Menu.cpp" />
     <ClCompile Include="..\..\..\w32oop\GUI\TrayIcon.cpp" />
     <ClCompile Include="..\..\..\w32oop\GUI\Window.cpp" />
     <ClCompile Include="..\..\..\w32oop\System\Hooks.cpp" />
     <ClCompile Include="..\..\..\w32oop\System\Registry.cpp" />
     <ClCompile Include="..\..\..\w32oop\System\Service.cpp" />
+    <ClCompile Include="..\lib\DestroyRemoteWindow.cpp" />
     <ClCompile Include="configuru_impl.cpp" />
     <ClCompile Include="IPCWindow.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="OverlayWindow.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />
+    <ClCompile Include="WindowAlphaEditor.cpp" />
     <ClCompile Include="WindowLocator.cpp" />
     <ClCompile Include="winlib.cpp" />
   </ItemGroup>
@@ -172,12 +177,14 @@
     <ClInclude Include="..\..\..\w32oop\Utility\StringUtil\operations.hpp" />
     <ClInclude Include="..\..\..\w32oop\w32use.hpp" />
     <ClInclude Include="..\lib\configuru.hpp" />
+    <ClInclude Include="..\lib\DestroyRemoteWindow.h" />
     <ClInclude Include="IPCWindow.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="OverlayWindow.h" />
     <ClInclude Include="publicdef.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SettingsDialog.h" />
+    <ClInclude Include="WindowAlphaEditor.h" />
     <ClInclude Include="WindowLocator.h" />
     <ClInclude Include="winlib.hpp" />
   </ItemGroup>

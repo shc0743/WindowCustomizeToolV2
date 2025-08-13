@@ -1,4 +1,8 @@
-﻿#include <w32use.hpp>
+﻿#define WIN32_NO_STATUS 1
+#include <Windows.h>
+#undef WIN32_NO_STATUS
+#include <ph.h>
+#include <w32use.hpp>
 #include "publicdef.h"
 #include "MainWindow.h"
 #include "SettingsDialog.h"
@@ -211,7 +215,11 @@ int WINAPI wWinMain(
 	// 初始化 COM 库
 	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 	if (FAILED(hr)) {
-		MessageBoxW(NULL, L"COM 初始化失败", L"错误", MB_ICONERROR);
+		MessageBoxW(NULL, L"COM 初始化失败", NULL, MB_ICONERROR);
+		return -1;
+	}
+	if (!NT_SUCCESS(PhInitializePhLib(L"Window Customize Tool V2"))) {
+		MessageBoxW(NULL, L"phlib 初始化失败!", NULL, MB_ICONERROR);
 		return -1;
 	}
 	// 初始化公共控件库

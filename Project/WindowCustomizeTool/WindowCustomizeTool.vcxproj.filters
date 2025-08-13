@@ -19,6 +19,12 @@
     <Filter Include="Configuru">
       <UniqueIdentifier>{81a00c4c-f466-4ce6-8781-f11286c3f2e9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lib">
+      <UniqueIdentifier>{16254b65-cf35-4b71-a819-6c71bbe7537c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\ph">
+      <UniqueIdentifier>{3ef47548-1ce1-486e-a0e7-d6918a134d6f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -62,6 +68,15 @@
     </ClCompile>
     <ClCompile Include="WindowLocator.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowAlphaEditor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\w32oop\GUI\FoundationLib.cpp">
+      <Filter>w32oop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\DestroyRemoteWindow.cpp">
+      <Filter>lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -157,6 +172,12 @@
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>资源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowAlphaEditor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\DestroyRemoteWindow.h">
+      <Filter>lib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -2,6 +2,7 @@
 #include <w32use.hpp>
 #include <format>
 #include <commctrl.h>
+#include <dwmapi.h>
 #include "publicdef.h"
 #include "resource.h"
 #include "OverlayWindow.h"
@@ -11,7 +12,7 @@
 
 class MainWindow : public Window {
 public:
-	MainWindow() : Window(L"Window Customize Tool V2", 640, 480, 0, 0, WS_OVERLAPPEDWINDOW, WS_EX_LAYERED) {}
+	MainWindow() : Window(L"Window Customize Tool V2", 640, 480, 0, 0, WS_OVERLAPPEDWINDOW) {}
 	~MainWindow() {
 		
 	}
@@ -48,7 +49,8 @@ protected:
 	Button btn_b2f, btn_op_shownormal, btn_op_min, btn_op_max;
 	Button btn_highlight, btn_showpos; Static text_winpos;
 	Button btn_swp, btn_resize;
-	CheckBox cb_topmost; Button btn_zorder, btn_border, btn_corner, btn_winstyle;
+	CheckBox cb_topmost; Button btn_zorder, btn_border, btn_corner, btn_winstyle, btn_adjust;
+	Button btn_close, btn_destroy, btn_endtask, btn_properties;
 	void startFind(EventData& ev);
 	void duringFind(EventData& ev);
 	void endFind(EventData& ev);
@@ -81,8 +83,12 @@ protected:
 	bool useHex = false;
 	int findMode = 0;
 	bool autoRefresh = false;
+	DWM_WINDOW_CORNER_PREFERENCE corner_config = DWMWCP_DEFAULT;
+	BYTE last_alpha = 255;
 
 	void toggleTopMostState();
+
+	static void createAlphaEditor(HWND hWnd);
 
 	static LRESULT CALLBACK SwpDlgHandler(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -114,7 +120,16 @@ protected:
 		WINDOW_add_handler(WM_TIMER, onTimer);
 		WINDOW_add_handler(WM_CLOSE, onClose);
 		WINDOW_add_handler(WM_SIZE, onMinimize);
-		WINDOW_add_handler(WM_APP + WM_CLOSE, [this](EventData&) { remove_style_ex(WS_EX_LAYERED); destroy(); });
+		WINDOW_add_handler(WM_APP + WM_CLOSE, [this](EventData&) {
+			COLORREF cr{}; BYTE alpha{}; DWORD flags{};
+			GetLayeredWindowAttributes(hwnd, &cr, &alpha, &flags);
+			last_alpha = alpha;
+			remove_style_ex(WS_EX_LAYERED); // 要使得窗口有正常的关闭动画，窗口不能是Layered窗口
+			destroy();
+		});
+	}
+	void postMenuEvent(WPARAM menu_id) {
+		dispatchEvent(EventData(hwnd, WM_MENU_CHECKED, menu_id, 0));
 	}
 public:
 	void hideMainWindow();
