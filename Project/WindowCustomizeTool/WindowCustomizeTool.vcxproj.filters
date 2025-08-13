@@ -22,9 +22,6 @@
     <Filter Include="lib">
       <UniqueIdentifier>{16254b65-cf35-4b71-a819-6c71bbe7537c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="lib\ph">
-      <UniqueIdentifier>{3ef47548-1ce1-486e-a0e7-d6918a134d6f}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

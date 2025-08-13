@@ -49,33 +49,8 @@ void MainWindow::onCreated() {
 	sbr.set_parent(this);
 	sbr.create(L"", 1, 1);
 
-	register_hot_key(true, false, false, 'W', [this](HotKeyProcData& data) {
-		data.preventDefault();
-		close();
-	}, HotKeyOptions::Windowed);
-	register_hot_key(true, false, true, 'W', [this](HotKeyProcData& data) {
-		data.preventDefault();
-		post(WM_APP + WM_CLOSE);
-	}, HotKeyOptions::Windowed);
-	register_hot_key(true, false, false, 'N', [this](HotKeyProcData& data) {
-		data.preventDefault();
-		app::create_win();
-	}, HotKeyOptions::Windowed);
-	register_hot_key(true, false, false, 'T', [this](HotKeyProcData& data) {
-		data.preventDefault();
-		toggleTopMostState();
-	}, HotKeyOptions::Windowed);
-	register_hot_key(true, false, false, 'R', [this](HotKeyProcData& data) {
-		data.preventDefault(); postMenuEvent(ID_MENU_WINDOWMANAGER_RELOAD);
-	}, HotKeyOptions::Windowed);
-	register_hot_key(false, false, false, VK_F5, [this](HotKeyProcData& data) {
-		data.preventDefault(); postMenuEvent(ID_MENU_WINDOWMANAGER_RELOAD);
-	}, HotKeyOptions::Windowed);
-	register_hot_key(true, false, false, 'F', [this](HotKeyProcData& data) {
-		data.preventDefault(); postMenuEvent(ID_MENU_WINDOW_FIND);
-	}, HotKeyOptions::Windowed);
-
 	init_controls();
+	init_hotkey();
 	init_config();
 	if (isTopMost) set_topmost(true);
 	SetMenu(hwnd, LoadMenuW(hInst, MAKEINTRESOURCEW(IDR_MENU_MAINWND)));
@@ -383,7 +358,49 @@ void MainWindow::init_controls() {
 	btn_destroy = Button(hwnd, L"Destroy", 1, 1); btn_destroy.create();
 	btn_endtask = Button(hwnd, L"EndTask", 1, 1); btn_endtask.create();
 	btn_properties = Button(hwnd, L"Properties", 1, 1); btn_properties.create();
-	btn_close.onClick([this](EventData&) {});
+	btn_close.onClick([this](EventData&) { postMenuEvent(ID_MENU_WINDOWMANAGER_CLOSE); });
+	btn_destroy.onClick([this](EventData&) { postMenuEvent(ID_MENU_WINDOWMANAGER_DESTROY); });
+	btn_endtask.onClick([this](EventData&) { postMenuEvent(ID_MENU_WINDOWMANAGER_ENDTASK); });
+	btn_properties.onClick([this](EventData&) { postMenuEvent(ID_MENU_WINDOWMANAGER_PROPERIES); });
+}
+
+void MainWindow::init_hotkey() {
+	// Ctrl+W
+	register_hot_key(true, false, false, 'W', [this](HotKeyProcData& data) {
+		data.preventDefault();
+		close();
+	}, HotKeyOptions::Windowed);
+	// Ctrl+Shift+W
+	register_hot_key(true, false, true, 'W', [this](HotKeyProcData& data) {
+		data.preventDefault();
+		post(WM_APP + WM_CLOSE);
+	}, HotKeyOptions::Windowed);
+	// Ctrl+N
+	register_hot_key(true, false, false, 'N', [this](HotKeyProcData& data) {
+		data.preventDefault();
+		app::create_win();
+	}, HotKeyOptions::Windowed);
+	// Ctrl+T
+	register_hot_key(true, false, false, 'T', [this](HotKeyProcData& data) {
+		data.preventDefault();
+		toggleTopMostState();
+	}, HotKeyOptions::Windowed);
+	// Ctrl+R
+	register_hot_key(true, false, false, 'R', [this](HotKeyProcData& data) {
+		data.preventDefault(); postMenuEvent(ID_MENU_WINDOWMANAGER_RELOAD);
+	}, HotKeyOptions::Windowed);
+	// F5
+	register_hot_key(false, false, false, VK_F5, [this](HotKeyProcData& data) {
+		data.preventDefault(); postMenuEvent(ID_MENU_WINDOWMANAGER_RELOAD);
+	}, HotKeyOptions::Windowed);
+	// Ctrl+F
+	register_hot_key(true, false, false, 'F', [this](HotKeyProcData& data) {
+		data.preventDefault(); postMenuEvent(ID_MENU_WINDOW_FIND);
+	}, HotKeyOptions::Windowed);
+	// Alt+Enter
+	register_hot_key(false, true, false, VK_RETURN, [this](HotKeyProcData& data) {
+		data.preventDefault(); postMenuEvent(ID_MENU_WINDOWMANAGER_PROPERIES);
+	}, HotKeyOptions::Windowed);
 }
 
 void MainWindow::init_config() {
@@ -475,6 +492,10 @@ void MainWindow::doLayout(EventData& ev) {
 	btn_corner.resize(330, 205, 80, 25);
 	btn_winstyle.resize(420, 205, 100, 25);
 	btn_adjust.resize(530, 205, w - 550, 25);
+	btn_close.resize(20, 240, 80, 25);
+	btn_destroy.resize(110, 240, 80, 25);
+	btn_endtask.resize(200, 240, 80, 25);
+	btn_properties.resize(290, 240, w - 310, 25);
 
 	// 调整状态栏大小
 	sbr.post((UINT)ev.message, ev.wParam, ev.lParam);

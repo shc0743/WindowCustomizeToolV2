@@ -33,6 +33,7 @@ protected:
 protected:
 	// 控件
 	void init_controls();
+	void init_hotkey();
 	void init_config();
 	bool init_success = false;
 	void updateMenuStatus();
