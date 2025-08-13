@@ -42,8 +42,11 @@ void WindowChangeParent::onCreated() {
 			MenuItem(L"手动输入 HWND", 2, [this] {
 				InputDialog idd(L"输入 HWND"); idd.create(); idd.center(hwnd);
 				idd.setButtonsText(L"确定", L"取消");
+				disable();
 				auto value = idd.getInput<ULONG_PTR>(L"请输入 HWND 的值。", (ULONG_PTR)(tp ? tp : GetParent(target)));
 				if (value.has_value()) update_target((HWND)(ULONG_PTR)value.value());
+				enable();
+				focus();
 			}),
 		}).pop(rc.left, rc.bottom);
 	});
