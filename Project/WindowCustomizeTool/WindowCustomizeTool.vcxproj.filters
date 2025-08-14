@@ -87,6 +87,12 @@
     <ClCompile Include="MainWindow_WinAdjust.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\w32oop\Network\HttpRequest.cpp">
+      <Filter>w32oop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\w32oop\Network\HttpResponse.cpp">
+      <Filter>w32oop</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\w32oop\Core\publicdef.hpp">
@@ -193,6 +199,15 @@
     </ClInclude>
     <ClInclude Include="ProcDialogs.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\w32oop\Network\def.hpp">
+      <Filter>w32oop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\w32oop\Network\HttpRequest.hpp">
+      <Filter>w32oop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\w32oop\Network\HttpResponse.hpp">
+      <Filter>w32oop</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

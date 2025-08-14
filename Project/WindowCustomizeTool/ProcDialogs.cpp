@@ -98,38 +98,28 @@ LRESULT SendMsgDlgHandler(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				TextOutW(dc, rc.left, rc.top, L"正在下载资源，请稍候...", 13);
 				ReleaseDC(NULL, dc);
 				thread([hDlg](wstring appName) {
-					auto exec = [hDlg](wstring c) {
-						DWORD err = exec_app(c, SW_HIDE);
-						if (err == 0) return 0;
-						TaskDialog(hDlg, NULL, L"无法完成下载", L"无法完成资源下载。",
-							format(L"对外部程序的调用返回了错误:\n命令行 = {}\n错误代码 = {}", c, err).c_str(),
-							TDCBF_CANCEL_BUTTON, TD_ERROR_ICON, NULL);
-						return 1;
-						};
-					auto quickread = [](wstring file) -> wstring {
-						HANDLE hFile = CreateFileW(file.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-						if (hFile == INVALID_HANDLE_VALUE) return L"";
-						CHAR buffer[2048]{}; DWORD r{};
-						if (!ReadFile(hFile, buffer, 2048, &r, NULL)) {
-							CloseHandle(hFile); return L"";
-						}
-						CloseHandle(hFile);
-						return str_wstr(buffer);
-						};
-					WCHAR dir[1024]{}; wstring cd;
-					GetCurrentDirectoryW(1024, dir); cd = dir;
-					GetTempPathW(1024, dir); SetCurrentDirectoryW(dir);
-					w32oop::util::RAIIHelper r([cd, hDlg] {
-						SetCurrentDirectoryW(cd.c_str());
-						EnableWindow(hDlg, TRUE);
+					try {
+						w32oop::util::RAIIHelper r([hDlg] {
+							EnableWindow(hDlg, TRUE);
 						});
-					if (exec(L"curl https://index.updates.clspd.top/download/WindowCustomizeTool_v2/10 -o wctlib.wm.data")) return;
-					wstring dl_url = quickread(L"wctlib.wm.data");
-					if (exec(L"curl " + dl_url + L" -o \"" + appName + L".window-message-data.ini")) return;
-					DeleteFileW(L"wctlib.wm.data");
-					MessageBoxW(hDlg, L"下载完成。", L"资源下载", MB_ICONINFORMATION);
-					PostMessage(hDlg, WM_USER + 3, 0, 0);
-					}, appName).detach();
+						HttpResponse resp = fetch(L"https://index.updates.clspd.top/download/WindowCustomizeTool_v2/10");
+						if (!resp.ok()) throw std::runtime_error("cannot load index file");
+						wstring dl_url = resp.text();
+						wstring save_file = appName + L".window-message-data.ini";
+						HttpRequest req(dl_url);
+						// 通过设置size_use_file_buffer为0实现将响应内容保存到文件
+						req.size_use_file_buffer(0);
+						req.file_buffer_file_name(save_file);
+						if (fetch(req).ok() == false) throw std::runtime_error("cannot download file");
+						MessageBoxW(hDlg, L"下载完成。", L"资源下载", MB_ICONINFORMATION);
+						PostMessage(hDlg, WM_USER + 3, 0, 0);
+					}
+					catch (exception& e) {
+						TaskDialog(hDlg, NULL, L"无法完成下载", L"无法完成资源下载。",
+							format(L"下载时出现了错误。\n异常 = {}\n错误代码 = {}", str_wstr(e.what()), ErrorChecker().message()).c_str(),
+							TDCBF_CANCEL_BUTTON, TD_ERROR_ICON, NULL);
+					}
+				}, appName).detach();
 			}
 			catch (...) { break; }
 		} while (0);

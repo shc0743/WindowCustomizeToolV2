@@ -1,7 +1,12 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{DD56D003-3D4B-4B3B-989C-CC1356012372}|WindowCustomizeTool\\WindowCustomizeTool.vcxproj|D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\ProcDialogs.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{DD56D003-3D4B-4B3B-989C-CC1356012372}|WindowCustomizeTool\\WindowCustomizeTool.vcxproj|solutionrelative:WindowCustomizeTool\\ProcDialogs.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Bookmark",
@@ -30,6 +35,19 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ProcDialogs.cpp",
+              "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\ProcDialogs.cpp",
+              "RelativeDocumentMoniker": "WindowCustomizeTool\\ProcDialogs.cpp",
+              "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\ProcDialogs.cpp",
+              "RelativeToolTip": "WindowCustomizeTool\\ProcDialogs.cpp",
+              "ViewState": "AgIAAD8AAAAAAAAAAAAAAEgAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-08-14T17:51:21.506Z",
+              "EditorCaption": ""
             }
           ]
         }

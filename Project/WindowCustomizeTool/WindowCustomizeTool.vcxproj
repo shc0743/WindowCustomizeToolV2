@@ -139,6 +139,8 @@
     <ClCompile Include="..\..\..\w32oop\GUI\Menu.cpp" />
     <ClCompile Include="..\..\..\w32oop\GUI\TrayIcon.cpp" />
     <ClCompile Include="..\..\..\w32oop\GUI\Window.cpp" />
+    <ClCompile Include="..\..\..\w32oop\Network\HttpRequest.cpp" />
+    <ClCompile Include="..\..\..\w32oop\Network\HttpResponse.cpp" />
     <ClCompile Include="..\..\..\w32oop\System\Hooks.cpp" />
     <ClCompile Include="..\..\..\w32oop\System\Registry.cpp" />
     <ClCompile Include="..\..\..\w32oop\System\Service.cpp" />
@@ -167,6 +169,9 @@
     <ClInclude Include="..\..\..\w32oop\GUI\Menu.hpp" />
     <ClInclude Include="..\..\..\w32oop\GUI\TrayIcon.hpp" />
     <ClInclude Include="..\..\..\w32oop\GUI\Window.hpp" />
+    <ClInclude Include="..\..\..\w32oop\Network\def.hpp" />
+    <ClInclude Include="..\..\..\w32oop\Network\HttpRequest.hpp" />
+    <ClInclude Include="..\..\..\w32oop\Network\HttpResponse.hpp" />
     <ClInclude Include="..\..\..\w32oop\System\def.hpp" />
     <ClInclude Include="..\..\..\w32oop\System\Hooks.hpp" />
     <ClInclude Include="..\..\..\w32oop\System\Registry.hpp" />
