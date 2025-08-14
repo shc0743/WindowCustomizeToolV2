@@ -50,7 +50,7 @@ protected:
 	Button btn_highlight, btn_showpos; Static text_winpos;
 	Button btn_swp, btn_resize;
 	CheckBox cb_topmost; Button btn_zorder, btn_border, btn_corner, btn_winstyle, btn_adjust;
-	Button btn_close, btn_destroy, btn_endtask, btn_properties;
+	Button btn_close, btn_destroy, btn_endtask, btn_sendmsg, btn_properties;
 	void update_target();
 	void context_anyorder_internal(int type, Window& btn_element);
 	void wop_report_result(bool ok = (GetLastError() == 0), DWORD code = GetLastError());
@@ -84,8 +84,6 @@ protected:
 	void toggleTopMostState();
 
 	static void createAlphaEditor(HWND hWnd);
-
-	static LRESULT CALLBACK SwpDlgHandler(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
 protected:
 	static HICON app_icon;

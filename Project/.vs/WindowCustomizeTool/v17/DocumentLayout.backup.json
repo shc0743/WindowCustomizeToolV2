@@ -1,16 +1,7 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\",
-  "Documents": [
-    {
-      "AbsoluteMoniker": "D:0:0:{DD56D003-3D4B-4B3B-989C-CC1356012372}|WindowCustomizeTool\\WindowCustomizeTool.vcxproj|D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\WindowChangeParent.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{DD56D003-3D4B-4B3B-989C-CC1356012372}|WindowCustomizeTool\\WindowCustomizeTool.vcxproj|solutionrelative:WindowCustomizeTool\\WindowChangeParent.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{DD56D003-3D4B-4B3B-989C-CC1356012372}|WindowCustomizeTool\\WindowCustomizeTool.vcxproj|D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\MainWindow.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{DD56D003-3D4B-4B3B-989C-CC1356012372}|WindowCustomizeTool\\WindowCustomizeTool.vcxproj|solutionrelative:WindowCustomizeTool\\MainWindow.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    }
-  ],
+  "Documents": [],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -18,7 +9,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 5,
+          "SelectedChildIndex": -1,
           "Children": [
             {
               "$type": "Bookmark",
@@ -39,31 +30,6 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "WindowChangeParent.cpp",
-              "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\WindowChangeParent.cpp",
-              "RelativeDocumentMoniker": "WindowCustomizeTool\\WindowChangeParent.cpp",
-              "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\WindowChangeParent.cpp",
-              "RelativeToolTip": "WindowCustomizeTool\\WindowChangeParent.cpp",
-              "ViewState": "AgIAACcAAAAAAAAAAAAAADEAAAAGAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-08-13T18:49:35.211Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "MainWindow.cpp",
-              "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\MainWindow.cpp",
-              "RelativeDocumentMoniker": "WindowCustomizeTool\\MainWindow.cpp",
-              "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\MainWindow.cpp",
-              "RelativeToolTip": "WindowCustomizeTool\\MainWindow.cpp",
-              "ViewState": "AgIAAMcDAAAAAAAAAAAQwD4EAAASAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-08-13T18:52:41.54Z"
             }
           ]
         }

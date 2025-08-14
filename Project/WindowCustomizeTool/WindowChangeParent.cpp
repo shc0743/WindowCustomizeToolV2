@@ -54,6 +54,7 @@ void WindowChangeParent::onCreated() {
 		close();
 	});
 
+
 	register_hot_key(false, false, false, VK_ESCAPE, [this](HotKeyProcData& ev) {
 		ev.preventDefault();
 		close();

@@ -78,6 +78,15 @@
     <ClCompile Include="WindowChangeParent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ProcDialogs.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWindow_MenuCommands.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWindow_WinAdjust.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\w32oop\Core\publicdef.hpp">
@@ -180,6 +189,9 @@
       <Filter>lib</Filter>
     </ClInclude>
     <ClInclude Include="WindowChangeParent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcDialogs.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

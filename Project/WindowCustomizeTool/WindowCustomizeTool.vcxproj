@@ -147,7 +147,10 @@
     <ClCompile Include="IPCWindow.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="MainWindow_MenuCommands.cpp" />
+    <ClCompile Include="MainWindow_WinAdjust.cpp" />
     <ClCompile Include="OverlayWindow.cpp" />
+    <ClCompile Include="ProcDialogs.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />
     <ClCompile Include="WindowAlphaEditor.cpp" />
     <ClCompile Include="WindowChangeParent.cpp" />
@@ -182,6 +185,7 @@
     <ClInclude Include="IPCWindow.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="OverlayWindow.h" />
+    <ClInclude Include="ProcDialogs.h" />
     <ClInclude Include="publicdef.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SettingsDialog.h" />

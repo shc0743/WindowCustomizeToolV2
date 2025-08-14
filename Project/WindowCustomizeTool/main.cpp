@@ -218,6 +218,7 @@ int WINAPI wWinMain(
 		MessageBoxW(NULL, L"COM 初始化失败", NULL, MB_ICONERROR);
 		return -1;
 	}
+	// 初始化 phlib
 	if (!NT_SUCCESS(PhInitializePhLib(L"Window Customize Tool V2"))) {
 		MessageBoxW(NULL, L"phlib 初始化失败!", NULL, MB_ICONERROR);
 		return -1;
@@ -227,6 +228,12 @@ int WINAPI wWinMain(
 	icc.dwSize = sizeof(INITCOMMONCONTROLSEX);
 	icc.dwICC = ICC_ALL_CLASSES;
 	InitCommonControlsEx(&icc);
+	// 调整工作目录
+	{
+		auto buffer = make_unique<WCHAR[]>(32768);
+		GetModuleFileNameW(hInst, buffer.get(), 32768);
+		SetCurrentDirectoryW(buffer.get());
+	}
 	// 设置全局选项，关闭所有窗口时退出应用程序
 	Window::set_global_option(Window::Option_QuitWhenWindowAllClosed, true);
 	Window::set_global_option(Window::Option_DebugMode, true);

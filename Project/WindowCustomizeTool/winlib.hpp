@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <Windows.h>
 #include <dwmapi.h>
+#include <string>
 
 // a bad implement.
 HWND GetWindowUnderPoint(POINT pt, HWND exclude = NULL);
@@ -19,3 +20,5 @@ inline bool IsWindowTopMost(HWND hWnd) {
 	return (GetWindowLong(hWnd, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
 }
 
+
+DWORD exec_app(std::wstring command, int show = SW_SHOW);
