@@ -46,3 +46,4 @@ ipch
 *.ipch
 .cache
 WindowCustomizeTool_v2.exe.config.json
+WindowCustomizeTool_v2.exe.window-message-data.ini
