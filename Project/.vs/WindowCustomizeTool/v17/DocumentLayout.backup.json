@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{DD56D003-3D4B-4B3B-989C-CC1356012372}|WindowCustomizeTool\\WindowCustomizeTool.vcxproj|D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\MainWindow_MenuCommands.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{DD56D003-3D4B-4B3B-989C-CC1356012372}|WindowCustomizeTool\\WindowCustomizeTool.vcxproj|solutionrelative:WindowCustomizeTool\\MainWindow_MenuCommands.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{DD56D003-3D4B-4B3B-989C-CC1356012372}|WindowCustomizeTool\\WindowCustomizeTool.vcxproj|D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\ProcDialogs.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{DD56D003-3D4B-4B3B-989C-CC1356012372}|WindowCustomizeTool\\WindowCustomizeTool.vcxproj|solutionrelative:WindowCustomizeTool\\ProcDialogs.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
@@ -35,12 +39,25 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "MainWindow_MenuCommands.cpp",
+              "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\MainWindow_MenuCommands.cpp",
+              "RelativeDocumentMoniker": "WindowCustomizeTool\\MainWindow_MenuCommands.cpp",
+              "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\MainWindow_MenuCommands.cpp",
+              "RelativeToolTip": "WindowCustomizeTool\\MainWindow_MenuCommands.cpp",
+              "ViewState": "AgIAAC4AAAAAAAAAAAAjwEEAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-08-15T08:13:13.246Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "ProcDialogs.cpp",
               "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\ProcDialogs.cpp",
               "RelativeDocumentMoniker": "WindowCustomizeTool\\ProcDialogs.cpp",
               "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\WindowCustomizeToolV2\\Project\\WindowCustomizeTool\\ProcDialogs.cpp",
               "RelativeToolTip": "WindowCustomizeTool\\ProcDialogs.cpp",
-              "ViewState": "AgIAAD8AAAAAAAAAAAAAAEMAAAATAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-08-14T17:51:21.506Z",
               "EditorCaption": ""

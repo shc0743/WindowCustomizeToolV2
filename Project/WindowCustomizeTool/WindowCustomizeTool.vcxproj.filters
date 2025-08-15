@@ -209,6 +209,9 @@
     <ClInclude Include="..\..\..\w32oop\Network\HttpResponse.hpp">
       <Filter>w32oop</Filter>
     </ClInclude>
+    <ClInclude Include="AppVer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WindowCustomizeTool.rc">

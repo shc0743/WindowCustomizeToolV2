@@ -187,6 +187,7 @@
     <ClInclude Include="..\..\..\w32oop\w32use.hpp" />
     <ClInclude Include="..\lib\configuru.hpp" />
     <ClInclude Include="..\lib\DestroyRemoteWindow.h" />
+    <ClInclude Include="AppVer.h" />
     <ClInclude Include="IPCWindow.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="OverlayWindow.h" />

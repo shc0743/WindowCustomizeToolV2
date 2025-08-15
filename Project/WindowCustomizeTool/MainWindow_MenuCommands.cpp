@@ -3,6 +3,7 @@
 #include "IPCWindow.h"
 #include "resource.h"
 #include "ProcDialogs.h"
+#include "../version_number.h"
 using namespace std;
 using namespace WindowCustomizeToolV2_app;
 using namespace WCTv2::winlib;
@@ -56,10 +57,11 @@ void MainWindow::onMenu(EventData& ev) {
 		post(WM_APP + WM_CLOSE);
 		break;
 	case ID_MENU_HELP_ABOUT:
-		DialogBox(hInst, MAKEINTRESOURCE(IDD_DIALOG_ABOUT), hwnd, (
+		DialogBoxParamW(hInst, MAKEINTRESOURCE(IDD_DIALOG_ABOUT), hwnd, (
 			[](HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)->LRESULT {
 				switch (message) {
 					case WM_INITDIALOG:
+						SetDlgItemTextW(hDlg, IDIGNORE, format(L"内部版本号: {}", app::version).c_str());
 						return TRUE;
 					case WM_COMMAND:
 						switch (LOWORD(wParam)) {
@@ -78,7 +80,7 @@ void MainWindow::onMenu(EventData& ev) {
 						return FALSE;
 				}
 			}
-		));
+		), 0);
 		break;
 	case ID_MENU_WINDOW_FIND: {
 		INT_PTR r = DialogBoxParamW(hInst, MAKEINTRESOURCE(IDD_DIALOG_WINDOWFINDER1), hwnd, (
